@@ -1,0 +1,14 @@
+<%
+  var _tips = (typeof tips !== 'undefined' && tips) ? tips : [];
+  var _name = (typeof tipName !== 'undefined' && tipName) ? tipName : 'them';
+%>
+<% if (_tips.length) { %>
+  <div class="tip-bar">
+    <span class="tip-lead">💸 Tip <%= _name %></span>
+    <% _tips.forEach(function(t){ %>
+      <a class="tip-btn <%= t.kind %>" href="<%= t.href %>" target="_blank" rel="noopener noreferrer">
+        <%= t.label %> <span class="tip-handle"><%= t.display %></span>
+      </a>
+    <% }); %>
+  </div>
+<% } %>

@@ -1,0 +1,34 @@
+<p class="back"><a href="/dm">← All messages</a></p>
+
+<div class="card">
+  <h1 class="dm-title"><%= isCreator ? (thread.guest_name || 'Guest') : thread.creator_name %></h1>
+  <p class="sub" style="margin-top:0;">
+    <% if (isCreator) { %>Private chat<% } else { %>Private chat · <a href="/u/<%= thread.creator_id %>">view profile</a><% } %>
+  </p>
+
+  <% if (!isCreator && tips && tips.length) { %>
+    <%- include('partials/tips', { tips: tips, tipName: thread.creator_name }) %>
+  <% } %>
+
+  <div class="thread">
+    <% if (messages.length === 0) { %>
+      <p class="muted">No messages yet — say hello 👋</p>
+    <% } %>
+    <% messages.forEach(function(m){ %>
+      <% var mine = (m.sender === (isCreator ? 'creator' : 'guest')); %>
+      <div class="msg <%= mine ? 'mine' : 'them' %>">
+        <span class="who"><%= mine ? 'You' : (isCreator ? (thread.guest_name || 'Guest') : thread.creator_name) %></span>
+        <p><%= m.body %></p>
+      </div>
+    <% }); %>
+  </div>
+
+  <form action="/dm/<%= thread.id %>/reply<%= tokenSuffix %>" method="post" class="chat-form">
+    <textarea name="body" rows="2" maxlength="2000" placeholder="Write a reply…" required></textarea>
+    <button class="btn" type="submit">Send</button>
+  </form>
+
+  <% if (!user) { %>
+    <p class="hint">💡 Bookmark this page to come back to the chat and see replies.</p>
+  <% } %>
+</div>

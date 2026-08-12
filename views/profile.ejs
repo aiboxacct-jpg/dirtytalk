@@ -1,0 +1,47 @@
+<p class="back"><a href="/">← Back to the room</a></p>
+
+<div class="card profile">
+  <h1><%= creator.name %></h1>
+  <% if (creator.bio) { %><p class="bio"><%= creator.bio %></p><% } %>
+
+  <% if (isOwner) { %>
+    <p class="muted">This is your profile. When people message you privately, you'll see them in your
+      <a href="/dm">Messages</a>. Add your tip handles in <a href="/account">Account</a>.</p>
+  <% } else { %>
+
+    <% if (tips && tips.length) { %>
+      <div id="tip" class="tip-card">
+        <%- include('partials/tips', { tips: tips, tipName: creator.name }) %>
+        <p class="hint" style="margin:8px 0 0;">Tips go straight to <%= creator.name %> — no account needed.</p>
+      </div>
+    <% } %>
+
+    <div class="dm-starter">
+      <h2>💬 Chat privately with <%= creator.name %></h2>
+      <% if (thread && messages.length) { %>
+        <div class="thread-mini">
+          <% messages.slice(-4).forEach(function(m){ %>
+            <div class="msg <%= m.sender === 'guest' ? 'mine' : 'them' %>">
+              <span class="who"><%= m.sender === 'creator' ? creator.name : 'You' %></span>
+              <p><%= m.body %></p>
+            </div>
+          <% }); %>
+        </div>
+        <p class="hint">
+          <a class="btn small" href="/dm/<%= thread.id %><%= user ? '' : '?t=' + thread.token %>">Open full chat →</a>
+        </p>
+      <% } else { %>
+        <p class="muted">Send a private message — no account needed. You'll get a private link to see replies.</p>
+      <% } %>
+
+      <form action="/dm/start" method="post" class="chat-form">
+        <input type="hidden" name="creator_id" value="<%= creator.id %>">
+        <% if (!user && !thread) { %>
+          <input type="text" name="name" maxlength="30" placeholder="Your name (optional)">
+        <% } %>
+        <textarea name="body" rows="2" maxlength="2000" placeholder="Write a private message…" required></textarea>
+        <button class="btn" type="submit">Send privately</button>
+      </form>
+    </div>
+  <% } %>
+</div>

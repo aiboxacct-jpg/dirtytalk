@@ -1,0 +1,18 @@
+<div class="card narrow">
+  <h1>Get tipped</h1>
+  <p class="sub">Create a creator account so people can chat with you privately and send tips. (Tippers don't need an account.)</p>
+  <% if (error) { %><div class="form-error"><%= error %></div><% } %>
+  <form action="/signup" method="post">
+    <label for="name">Display name</label>
+    <input type="text" id="name" name="name" maxlength="30" placeholder="What people will see" required>
+
+    <label for="email">Email</label>
+    <input type="email" id="email" name="email" placeholder="you@email.com" required>
+
+    <label for="password">Password</label>
+    <input type="password" id="password" name="password" placeholder="At least 6 characters" required>
+
+    <button class="btn" type="submit" style="width:100%;margin-top:14px;">Create account</button>
+  </form>
+  <p class="hint">Already have one? <a href="/login">Log in</a>.</p>
+</div>

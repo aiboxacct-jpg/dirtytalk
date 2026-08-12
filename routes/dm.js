@@ -1,0 +1,157 @@
+// Private 1-on-1 chats between a creator and a visitor (guest or creator).
+const express = require('express');
+const crypto = require('crypto');
+const db = require('../db');
+const { tipLinks } = require('../tips');
+
+const router = express.Router();
+const MAX = 2000;
+
+// --- Helpers (also used by the profile page) -------------------------------
+async function findThread(creatorId, req) {
+  if (req.user) {
+    return db.get('SELECT * FROM threads WHERE creator_id = ? AND guest_user_id = ?', creatorId, req.user.id);
+  }
+  return db.get('SELECT * FROM threads WHERE creator_id = ? AND guest_id = ?', creatorId, req.gid);
+}
+
+async function findOrCreateThread(creatorId, req, guestName) {
+  const existing = await findThread(creatorId, req);
+  if (existing) return existing;
+  const token = crypto.randomBytes(16).toString('hex');
+  const name = (guestName && guestName.trim().slice(0, 30)) || (req.user ? req.user.name : 'Guest');
+  const info = await db.run(
+    `INSERT INTO threads (creator_id, guest_id, guest_user_id, guest_name, token, last_at)
+     VALUES (?, ?, ?, ?, ?, datetime('now'))`,
+    creatorId,
+    req.user ? null : req.gid,
+    req.user ? req.user.id : null,
+    name,
+    token
+  );
+  return db.get('SELECT * FROM threads WHERE id = ?', Number(info.lastInsertRowid));
+}
+
+function threadMessages(threadId) {
+  return db.all('SELECT * FROM dm_messages WHERE thread_id = ? ORDER BY id', threadId);
+}
+
+async function addMessage(threadId, sender, body) {
+  await db.run('INSERT INTO dm_messages (thread_id, sender, body) VALUES (?, ?, ?)', threadId, sender, body);
+  await db.run("UPDATE threads SET last_at = datetime('now') WHERE id = ?", threadId);
+}
+
+// Who is the viewer, relative to this thread?
+function access(thread, req) {
+  const tokenOk = !!(req.query && req.query.t && thread.token && req.query.t === thread.token);
+  const isCreator = !!req.user && req.user.id === thread.creator_id;
+  const isGuest =
+    (!!req.user && req.user.id === thread.guest_user_id) ||
+    (!req.user && !!thread.guest_id && thread.guest_id === req.gid) ||
+    tokenOk;
+  return { isCreator, isGuest, ok: isCreator || isGuest };
+}
+
+function flash(req, type, msg) {
+  req.session.flash = { type, msg };
+}
+
+// --- Start a private chat from a profile or the room -----------------------
+router.post('/start', async (req, res) => {
+  const creatorId = Number(req.body.creator_id);
+  const body = String(req.body.body || '').trim();
+  const name = String(req.body.name || '').trim();
+  const creator = await db.get('SELECT id FROM users WHERE id = ?', creatorId);
+  if (!creator) return res.status(404).render('error', { title: 'Not found', message: 'That person does not exist.' });
+  if (req.user && req.user.id === creatorId) {
+    flash(req, 'error', "That's you — open your Messages to reply to people.");
+    return res.redirect('/dm');
+  }
+  const thread = await findOrCreateThread(creatorId, req, name);
+  if (body) await addMessage(thread.id, 'guest', body.slice(0, MAX));
+  // Guests get a bookmarkable tokened link so they can return to the chat.
+  const suffix = req.user ? '' : '?t=' + thread.token;
+  res.redirect('/dm/' + thread.id + suffix);
+});
+
+// --- Inbox — all of the viewer's private chats -----------------------------
+router.get('/', async (req, res) => {
+  let threads;
+  if (req.user) {
+    threads = await db.all(
+      `SELECT t.*, c.name AS creator_name
+         FROM threads t JOIN users c ON c.id = t.creator_id
+        WHERE t.creator_id = ? OR t.guest_user_id = ?
+        ORDER BY COALESCE(t.last_at, t.created_at) DESC`,
+      req.user.id,
+      req.user.id
+    );
+  } else {
+    threads = await db.all(
+      `SELECT t.*, c.name AS creator_name
+         FROM threads t JOIN users c ON c.id = t.creator_id
+        WHERE t.guest_id = ?
+        ORDER BY COALESCE(t.last_at, t.created_at) DESC`,
+      req.gid
+    );
+  }
+  for (const t of threads) {
+    const last = await db.get('SELECT body FROM dm_messages WHERE thread_id = ? ORDER BY id DESC LIMIT 1', t.id);
+    t.last_body = last ? last.body : '';
+    t.iamCreator = !!req.user && req.user.id === t.creator_id;
+    t.other = t.iamCreator ? t.guest_name || 'Guest' : t.creator_name;
+    t.link = '/dm/' + t.id + (t.iamCreator || req.user ? '' : '?t=' + t.token);
+  }
+  res.render('inbox', { title: 'Messages', threads });
+});
+
+// --- A single thread --------------------------------------------------------
+router.get('/:id', async (req, res) => {
+  const thread = await db.get(
+    `SELECT t.*, c.name AS creator_name, c.cashapp, c.venmo
+       FROM threads t JOIN users c ON c.id = t.creator_id WHERE t.id = ?`,
+    req.params.id
+  );
+  if (!thread) return res.status(404).render('error', { title: 'Not found', message: 'Chat not found.' });
+  const acc = access(thread, req);
+  if (!acc.ok) {
+    if (!req.user) {
+      req.session.returnTo = req.originalUrl;
+      return res.redirect('/login');
+    }
+    return res.status(403).render('error', { title: 'Not allowed', message: 'You cannot view this chat.' });
+  }
+  const messages = await threadMessages(thread.id);
+  res.render('dm', {
+    title: acc.isCreator ? 'Chat with ' + (thread.guest_name || 'Guest') : 'Chat with ' + thread.creator_name,
+    thread,
+    messages,
+    isCreator: acc.isCreator,
+    // The visitor can tip the creator from inside the private chat.
+    tips: acc.isCreator ? [] : tipLinks(thread),
+    tokenSuffix: req.query.t ? '?t=' + encodeURIComponent(req.query.t) : '',
+  });
+});
+
+// --- Reply within a thread --------------------------------------------------
+router.post('/:id/reply', async (req, res) => {
+  const thread = await db.get('SELECT * FROM threads WHERE id = ?', req.params.id);
+  if (!thread) return res.status(404).render('error', { title: 'Not found', message: 'Chat not found.' });
+  const acc = access(thread, req);
+  if (!acc.ok) {
+    if (!req.user) {
+      req.session.returnTo = req.originalUrl;
+      return res.redirect('/login');
+    }
+    return res.status(403).render('error', { title: 'Not allowed', message: 'You cannot reply here.' });
+  }
+  const body = String(req.body.body || '').trim();
+  if (body) await addMessage(thread.id, acc.isCreator ? 'creator' : 'guest', body.slice(0, MAX));
+  res.redirect('/dm/' + thread.id + (req.query.t ? '?t=' + encodeURIComponent(req.query.t) : ''));
+});
+
+module.exports = router;
+router.findThread = findThread;
+router.threadMessages = threadMessages;
+module.exports.findThread = findThread;
+module.exports.threadMessages = threadMessages;

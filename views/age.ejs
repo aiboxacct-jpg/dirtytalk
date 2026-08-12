@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Age verification</title>
+  <link rel="stylesheet" href="/public/style.css">
+</head>
+<body>
+  <div class="age-wrap">
+    <div class="age-box">
+      <h1>Adults only</h1>
+      <p>This site contains adult content and chat. You must be 18 or older (21 where required) to enter.</p>
+      <form action="/age" method="post">
+        <input type="hidden" name="next" value="<%= next %>">
+        <button class="btn" type="submit" style="width:100%;">I am 18 or older — Enter</button>
+      </form>
+      <p class="hint" style="margin-top:14px;">By entering you agree you are of legal age and consent to viewing adult material.</p>
+    </div>
+  </div>
+</body>
+</html>

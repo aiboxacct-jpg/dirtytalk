@@ -1,0 +1,32 @@
+<!-- Shared page shell (express-ejs-layouts injects <%- body %>). -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title><%= typeof title !== 'undefined' ? title + ' · ' + siteName : siteName %></title>
+<link rel="stylesheet" href="/public/style.css">
+
+<header class="topbar">
+  <a class="brand" href="/"><%= siteName %></a>
+  <button class="menu-toggle" type="button" aria-label="Menu" onclick="document.body.classList.toggle('nav-open')">☰</button>
+  <nav class="nav">
+    <a href="/">Room</a>
+    <% if (user) { %>
+      <a href="/dm">Messages</a>
+      <a href="/account">Account</a>
+      <form action="/logout" method="post" class="inline"><button class="linkbtn" type="submit">Log out</button></form>
+    <% } else { %>
+      <a href="/dm">My chats</a>
+      <a href="/login">Log in</a>
+      <a href="/signup" class="btn small">Get tipped</a>
+    <% } %>
+  </nav>
+</header>
+
+<main class="wrap">
+  <% if (flash) { %><div class="flash <%= flash.type %>"><%= flash.msg %></div><% } %>
+  <%- body %>
+</main>
+
+<footer class="foot">
+  <span><%= siteName %> · Adults only (18+) · Be safe and follow your local laws.</span>
+</footer>

@@ -1,0 +1,27 @@
+<div class="card narrow">
+  <h1>My account</h1>
+  <p class="sub"><%= user.email %></p>
+  <% if (error) { %><div class="form-error"><%= error %></div><% } %>
+
+  <p class="hint">Your public profile & tip link:
+    <a href="/u/<%= user.id %>" target="_blank" rel="noopener">/u/<%= user.id %></a> — share it anywhere.</p>
+
+  <form action="/account" method="post">
+    <label for="name">Display name</label>
+    <input type="text" id="name" name="name" maxlength="30" value="<%= user.name %>" required>
+
+    <label for="bio">Bio (shown on your profile)</label>
+    <textarea id="bio" name="bio" maxlength="500"><%= user.bio || '' %></textarea>
+
+    <h2>Tip handles</h2>
+    <p class="hint">People see these as tap-to-pay buttons on your profile and in private chats. Fill in the ones you use.</p>
+
+    <label for="cashapp">Cash App ($cashtag)</label>
+    <input type="text" id="cashapp" name="cashapp" value="<%= user.cashapp || '' %>" placeholder="$yourtag">
+
+    <label for="venmo">Venmo (@username)</label>
+    <input type="text" id="venmo" name="venmo" value="<%= user.venmo || '' %>" placeholder="@your-venmo">
+
+    <button class="btn" type="submit" style="width:100%;margin-top:16px;">Save changes</button>
+  </form>
+</div>

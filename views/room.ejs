@@ -1,0 +1,125 @@
+<div class="room-head">
+  <h1>The Room</h1>
+  <p class="sub">Say hi to everyone. Want to go private with someone? Tap <strong>Chat &amp; tip</strong> on their message. (18+)</p>
+</div>
+
+<% if (creators.length) { %>
+  <div class="creators-strip">
+    <span class="strip-label">Here now:</span>
+    <% creators.forEach(function(c){ %>
+      <a class="creator-chip" href="/u/<%= c.id %>"><%= c.name %></a>
+    <% }); %>
+  </div>
+<% } %>
+
+<div class="room-box">
+  <div id="room-msgs" class="room-msgs">
+    <% if (messages.length === 0) { %>
+      <p class="muted" id="room-empty">No messages yet — be the first to say something 👋</p>
+    <% } %>
+    <% messages.forEach(function(m){ %>
+      <div class="rmsg <%= m.mine ? 'mine' : '' %>" data-id="<%= m.id %>">
+        <div class="rmsg-head">
+          <% if (m.creatorId && !m.mine) { %>
+            <a class="rmsg-name creator" href="/u/<%= m.creatorId %>"><%= m.name %></a>
+          <% } else { %>
+            <span class="rmsg-name"><%= m.name %></span>
+          <% } %>
+          <span class="rmsg-time"><%= (m.created_at || '').slice(11,16) %></span>
+          <% if (m.creatorId && !m.mine) { %><a class="rmsg-dm" href="/u/<%= m.creatorId %>#tip">💬 Chat &amp; tip</a><% } %>
+        </div>
+        <div class="rmsg-body"><%= m.body %></div>
+      </div>
+    <% }); %>
+  </div>
+
+  <form id="room-form" class="room-form" action="/room" method="post">
+    <% if (isGuest) { %>
+      <input type="text" id="room-name" name="name" maxlength="30" value="<%= suggestedName %>" placeholder="Your name">
+    <% } %>
+    <input type="text" id="room-body" name="body" maxlength="500" placeholder="Type a message…" autocomplete="off" required>
+    <button class="btn" type="submit">Send</button>
+  </form>
+</div>
+
+<% if (isGuest) { %>
+  <p class="hint">Chatting as a guest — no signup needed. Want to <strong>get tipped</strong> and go private?
+    <a href="/signup">Create a creator account</a>.</p>
+<% } %>
+
+<script>
+(function () {
+  var box = document.getElementById('room-msgs');
+  var form = document.getElementById('room-form');
+  var input = document.getElementById('room-body');
+  var nameInput = document.getElementById('room-name');
+  var empty = document.getElementById('room-empty');
+  var lastId = <%= messages.length ? messages[messages.length - 1].id : 0 %>;
+  var atBottom = true;
+
+  box.addEventListener('scroll', function () {
+    atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 40;
+  });
+  function scrollIfNeeded() { if (atBottom) box.scrollTop = box.scrollHeight; }
+  scrollIfNeeded();
+
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text; // textContent => XSS-safe
+    return e;
+  }
+  function addMessage(m) {
+    if (empty) { empty.remove(); empty = null; }
+    if (box.querySelector('.rmsg[data-id="' + m.id + '"]')) return;
+    var wrap = el('div', 'rmsg' + (m.mine ? ' mine' : ''));
+    wrap.setAttribute('data-id', m.id);
+    var head = el('div', 'rmsg-head');
+    if (m.creatorId && !m.mine) {
+      var a = el('a', 'rmsg-name creator', m.name);
+      a.href = '/u/' + m.creatorId;
+      head.appendChild(a);
+    } else {
+      head.appendChild(el('span', 'rmsg-name', m.name));
+    }
+    head.appendChild(el('span', 'rmsg-time', (m.created_at || '').slice(11, 16)));
+    if (m.creatorId && !m.mine) {
+      var dm = el('a', 'rmsg-dm', '💬 Chat & tip');
+      dm.href = '/u/' + m.creatorId + '#tip';
+      head.appendChild(dm);
+    }
+    wrap.appendChild(head);
+    wrap.appendChild(el('div', 'rmsg-body', m.body));
+    box.appendChild(wrap);
+    if (m.id > lastId) lastId = m.id;
+  }
+
+  async function poll() {
+    try {
+      var r = await fetch('/feed?after=' + lastId, { headers: { accept: 'application/json' } });
+      var data = await r.json();
+      if (data.messages && data.messages.length) { data.messages.forEach(addMessage); scrollIfNeeded(); }
+    } catch (e) {}
+  }
+  setInterval(poll, 4000);
+
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var body = input.value.trim();
+    if (!body) return;
+    var params = new URLSearchParams();
+    params.set('body', body);
+    if (nameInput) params.set('name', nameInput.value);
+    input.value = '';
+    try {
+      var r = await fetch('/room', {
+        method: 'POST',
+        headers: { accept: 'application/json', 'content-type': 'application/x-www-form-urlencoded' },
+        body: params,
+      });
+      var data = await r.json();
+      if (data.ok && data.message) { atBottom = true; addMessage(data.message); scrollIfNeeded(); }
+    } catch (e) {}
+  });
+})();
+</script>

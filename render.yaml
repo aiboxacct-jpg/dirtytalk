@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: sexting-chat
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: SITE_NAME
+        value: Whisper
+      - key: SESSION_SECRET
+        generateValue: true
+      # For persistent data across deploys, add a free Turso DB and set these:
+      # - key: DATABASE_URL
+      #   sync: false
+      # - key: DATABASE_AUTH_TOKEN
+      #   sync: false
