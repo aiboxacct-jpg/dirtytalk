@@ -95,9 +95,10 @@ textarea { resize: vertical; }
 .room-form .btn { flex: 0 0 auto; }
 
 /* Chat forms & threads (profile + dm) */
-.chat-form { display: flex; gap: 8px; margin-top: 12px; align-items: flex-end; }
-.chat-form textarea { flex: 1; }
-.chat-form .btn { flex: 0 0 auto; }
+.chat-form { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; align-items: flex-end; }
+.chat-form input[type=text] { flex: 1 1 100%; }   /* name field gets its own row */
+.chat-form textarea { flex: 1 1 220px; min-width: 0; }  /* stays usable; wraps button below when tight */
+.chat-form .btn { flex: 0 0 auto; margin-left: auto; }
 .thread, .thread-mini { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
 .thread { max-height: 50vh; overflow-y: auto; }
 .msg { max-width: 82%; }
