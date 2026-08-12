@@ -7,7 +7,7 @@ services:
     startCommand: npm start
     envVars:
       - key: SITE_NAME
-        value: Whisper
+        value: DirtyTalk
       - key: SESSION_SECRET
         generateValue: true
       # Persistent storage (free Turso DB). Values are entered in the Render

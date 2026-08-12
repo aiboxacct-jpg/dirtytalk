@@ -46,7 +46,7 @@ app.use((req, res, next) => {
 
 // Site name + flash for all views.
 app.use((req, res, next) => {
-  res.locals.siteName = process.env.SITE_NAME || 'Whisper';
+  res.locals.siteName = process.env.SITE_NAME || 'DirtyTalk';
   res.locals.absUrl = (p) => `${req.protocol}://${req.get('host')}${p || ''}`;
   res.locals.flash = req.session.flash || null;
   delete (req.session || {}).flash;
