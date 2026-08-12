@@ -24,7 +24,8 @@
   </div>
 
   <form action="/dm/<%= thread.id %>/reply<%= tokenSuffix %>" method="post" class="chat-form">
-    <textarea name="body" rows="2" maxlength="2000" placeholder="Write a reply…" required></textarea>
+    <textarea id="dm-reply" name="body" rows="2" maxlength="2000" placeholder="Write a reply…" required></textarea>
+    <button type="button" class="emoji-btn" data-target="dm-reply" aria-label="Emoji" title="Emoji">😊</button>
     <button class="btn" type="submit">Send</button>
   </form>
 

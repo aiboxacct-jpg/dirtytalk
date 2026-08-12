@@ -39,7 +39,8 @@
         <% if (!user && !thread) { %>
           <input type="text" name="name" maxlength="30" placeholder="Your name (optional)">
         <% } %>
-        <textarea name="body" rows="2" maxlength="2000" placeholder="Write a private message…" required></textarea>
+        <textarea id="profile-msg" name="body" rows="2" maxlength="2000" placeholder="Write a private message…" required></textarea>
+        <button type="button" class="emoji-btn" data-target="profile-msg" aria-label="Emoji" title="Emoji">😊</button>
         <button class="btn" type="submit">Send privately</button>
       </form>
     </div>
