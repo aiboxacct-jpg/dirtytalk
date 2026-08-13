@@ -1,7 +1,7 @@
 <p class="back"><a href="/dm">← All messages</a></p>
 
 <div class="card">
-  <h1 class="dm-title"><%= isCreator ? (thread.guest_name || 'Guest') : thread.creator_name %></h1>
+  <h1 class="dm-title"><%= otherName %></h1>
   <p class="sub" style="margin-top:0;">
     <% if (isCreator) { %>Private chat<% } else { %>Private chat · <a href="/u/<%= thread.creator_id %>">view profile</a><% } %>
   </p>
@@ -10,20 +10,19 @@
     <%- include('partials/tips', { tips: tips, tipName: thread.creator_name }) %>
   <% } %>
 
-  <div class="thread">
+  <div id="dm-msgs" class="thread live">
     <% if (messages.length === 0) { %>
-      <p class="muted">No messages yet — say hello 👋</p>
+      <p class="muted" id="dm-empty">No messages yet — say hello 👋</p>
     <% } %>
     <% messages.forEach(function(m){ %>
-      <% var mine = (m.sender === (isCreator ? 'creator' : 'guest')); %>
-      <div class="msg <%= mine ? 'mine' : 'them' %>">
-        <span class="who"><%= mine ? 'You' : (isCreator ? (thread.guest_name || 'Guest') : thread.creator_name) %></span>
+      <div class="msg <%= m.mine ? 'mine' : 'them' %>" data-id="<%= m.id %>">
+        <span class="who"><%= m.mine ? 'You' : otherName %></span>
         <p><%= m.body %></p>
       </div>
     <% }); %>
   </div>
 
-  <form action="/dm/<%= thread.id %>/reply<%= tokenSuffix %>" method="post" class="chat-form">
+  <form id="dm-form" class="chat-form" action="/dm/<%= thread.id %>/reply<%= tokenSuffix %>" method="post">
     <textarea id="dm-reply" name="body" rows="2" maxlength="2000" placeholder="Write a reply…" required></textarea>
     <button type="button" class="emoji-btn" data-target="dm-reply" aria-label="Emoji" title="Emoji">😊</button>
     <button class="btn" type="submit">Send</button>
@@ -33,3 +32,67 @@
     <p class="hint">💡 Bookmark this page to come back to the chat and see replies.</p>
   <% } %>
 </div>
+
+<script>
+(function () {
+  var box = document.getElementById('dm-msgs');
+  var form = document.getElementById('dm-form');
+  var input = document.getElementById('dm-reply');
+  var empty = document.getElementById('dm-empty');
+  var otherName = <%- JSON.stringify(otherName) %>;
+  var base = '/dm/<%= thread.id %>';
+  var tokenQ = '<%= tokenSuffix %>';           // '?t=...' or ''
+  var replyUrl = base + '/reply' + tokenQ;
+  function feedUrl(after) { return base + '/feed' + (tokenQ ? tokenQ + '&' : '?') + 'after=' + after; }
+  var lastId = <%= messages.length ? messages[messages.length - 1].id : 0 %>;
+  var atBottom = true;
+
+  box.addEventListener('scroll', function () {
+    atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 40;
+  });
+  function scrollIfNeeded() { if (atBottom) box.scrollTop = box.scrollHeight; }
+  scrollIfNeeded();
+
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text; // textContent => XSS-safe
+    return e;
+  }
+  function addMessage(m) {
+    if (empty) { empty.remove(); empty = null; }
+    if (box.querySelector('.msg[data-id="' + m.id + '"]')) return;
+    var wrap = el('div', 'msg ' + (m.mine ? 'mine' : 'them'));
+    wrap.setAttribute('data-id', m.id);
+    wrap.appendChild(el('span', 'who', m.mine ? 'You' : otherName));
+    wrap.appendChild(el('p', null, m.body));
+    box.appendChild(wrap);
+    if (m.id > lastId) lastId = m.id;
+  }
+
+  async function poll() {
+    try {
+      var r = await fetch(feedUrl(lastId), { headers: { accept: 'application/json' } });
+      if (!r.ok) return;
+      var data = await r.json();
+      if (data.messages && data.messages.length) { data.messages.forEach(addMessage); scrollIfNeeded(); }
+    } catch (e) {}
+  }
+  setInterval(poll, 4000);
+
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var body = input.value.trim();
+    if (!body) return;
+    input.value = '';
+    try {
+      var r = await fetch(replyUrl, {
+        method: 'POST',
+        headers: { accept: 'application/json', 'content-type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ body: body }),
+      });
+      if (r.ok) { atBottom = true; await poll(); } // poll pulls in our message (and any we missed)
+    } catch (e) {}
+  });
+})();
+</script>

@@ -52,6 +52,20 @@ function access(thread, req) {
   return { isCreator, isGuest, ok: isCreator || isGuest };
 }
 
+// Shape messages for the client; `mine` is relative to who's viewing.
+function serializeDm(rows, isCreator) {
+  return rows.map((m) => ({
+    id: m.id,
+    body: m.body,
+    created_at: m.created_at,
+    mine: m.sender === (isCreator ? 'creator' : 'guest'),
+  }));
+}
+
+function wantsJson(req) {
+  return (req.get('accept') || '').includes('application/json');
+}
+
 function flash(req, type, msg) {
   req.session.flash = { type, msg };
 }
@@ -125,12 +139,28 @@ router.get('/:id', async (req, res) => {
   res.render('dm', {
     title: acc.isCreator ? 'Chat with ' + (thread.guest_name || 'Guest') : 'Chat with ' + thread.creator_name,
     thread,
-    messages,
+    messages: serializeDm(messages, acc.isCreator),
     isCreator: acc.isCreator,
+    otherName: acc.isCreator ? thread.guest_name || 'Guest' : thread.creator_name,
     // The visitor can tip the creator from inside the private chat.
     tips: acc.isCreator ? [] : tipLinks(thread),
     tokenSuffix: req.query.t ? '?t=' + encodeURIComponent(req.query.t) : '',
   });
+});
+
+// --- Live feed: messages after a given id (for polling) --------------------
+router.get('/:id/feed', async (req, res) => {
+  const thread = await db.get('SELECT * FROM threads WHERE id = ?', req.params.id);
+  if (!thread) return res.status(404).json({ ok: false });
+  const acc = access(thread, req);
+  if (!acc.ok) return res.status(403).json({ ok: false });
+  const after = Number(req.query.after) || 0;
+  const rows = await db.all(
+    'SELECT * FROM dm_messages WHERE thread_id = ? AND id > ? ORDER BY id LIMIT 200',
+    thread.id,
+    after
+  );
+  res.json({ messages: serializeDm(rows, acc.isCreator) });
 });
 
 // --- Reply within a thread --------------------------------------------------
@@ -147,6 +177,9 @@ router.post('/:id/reply', async (req, res) => {
   }
   const body = String(req.body.body || '').trim();
   if (body) await addMessage(thread.id, acc.isCreator ? 'creator' : 'guest', body.slice(0, MAX));
+  // Ajax callers just get an OK and then poll /feed for the new message(s);
+  // no-JS callers fall back to a normal redirect (page reload).
+  if (wantsJson(req)) return res.json({ ok: !!body });
   res.redirect('/dm/' + thread.id + (req.query.t ? '?t=' + encodeURIComponent(req.query.t) : ''));
 });
 

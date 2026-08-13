@@ -110,6 +110,7 @@ textarea { resize: vertical; }
 .emoji-item:hover { background: #f1eef7; }
 .thread, .thread-mini { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
 .thread { max-height: 50vh; overflow-y: auto; }
+.thread.live { min-height: 200px; padding: 4px 2px; }
 .msg { max-width: 82%; }
 .msg.mine { align-self: flex-end; text-align: right; }
 .msg.them { align-self: flex-start; }
