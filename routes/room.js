@@ -101,7 +101,7 @@ router.post('/room/upload', uploadSingle('image'), async (req, res) => {
     url = await uploadImage(req.file.buffer, req.file.originalname);
   } catch (e) {
     console.error('room upload failed:', (e && (e.message || e.error)) || e);
-    return res.status(500).json({ ok: false, error: 'Upload failed. Try again.', detail: (e && (e.message || (e.error && e.error.message))) || String(e) });
+    return res.status(500).json({ ok: false, error: 'Upload failed. Try again.' });
   }
   const info = await db.run(
     'INSERT INTO room_messages (user_id, gid, name, body, image_url) VALUES (?, ?, ?, ?, ?)',
