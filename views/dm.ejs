@@ -125,16 +125,20 @@
   fileInput.addEventListener('change', async function () {
     var file = fileInput.files[0];
     if (!file) return;
+    if (file.size > 10 * 1024 * 1024) { alert('That image is too large (max 10 MB). Please pick a smaller one.'); fileInput.value = ''; return; }
     var fd = new FormData();
     fd.append('image', file);
     photoBtn.disabled = true;
+    var orig = photoBtn.textContent; photoBtn.textContent = '⏳';
     try {
       var r = await fetch(uploadUrl, { method: 'POST', headers: { accept: 'application/json' }, body: fd });
-      var data = await r.json();
-      if (data.ok) { atBottom = true; await poll(); }
-      else if (data.error) alert(data.error);
-    } catch (e) { alert('Upload failed.'); }
-    photoBtn.disabled = false;
+      var text = await r.text();
+      var data = null; try { data = JSON.parse(text); } catch (e) {}
+      if (r.ok && data && data.ok) { atBottom = true; await poll(); }
+      else if (data && data.error) alert(data.error);
+      else alert('Upload didn’t go through — please refresh the page and try again.');
+    } catch (e) { alert('Upload didn’t go through — please refresh the page and try again.'); }
+    photoBtn.disabled = false; photoBtn.textContent = orig;
     fileInput.value = '';
   });
 })();

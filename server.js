@@ -3,7 +3,7 @@ require('express-async-errors');
 const path = require('path');
 const crypto = require('crypto');
 const express = require('express');
-const session = require('express-session');
+const cookieSession = require('cookie-session');
 const expressLayouts = require('express-ejs-layouts');
 
 const db = require('./db');
@@ -23,12 +23,16 @@ app.use('/public', express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // local dev image fallback
 app.use(express.urlencoded({ extended: true }));
 
+// Cookie-backed session: state lives in a signed cookie, so it survives
+// redeploys/restarts (unlike an in-memory store, which wiped everyone's
+// age-gate + login on every deploy).
 app.use(
-  session({
-    secret: process.env.SESSION_SECRET || 'change-me-in-production',
-    resave: false,
-    saveUninitialized: false,
-    cookie: { httpOnly: true, sameSite: 'lax', maxAge: 1000 * 60 * 60 * 24 * 30 },
+  cookieSession({
+    name: 'dtsess',
+    keys: [process.env.SESSION_SECRET || 'change-me-in-production'],
+    httpOnly: true,
+    sameSite: 'lax',
+    maxAge: 1000 * 60 * 60 * 24 * 30,
   })
 );
 
