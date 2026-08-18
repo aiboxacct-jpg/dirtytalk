@@ -23,6 +23,22 @@
     <% }); %>
   </div>
 
+  <% if (paywall.on && !isCreator) { %>
+    <div id="freebar" class="freebar" hidden>⏳ Free time left: <strong id="freetime">--:--</strong></div>
+    <div id="paywall" class="paywall" hidden>
+      <div class="paywall-title">🔒 Free time’s up</div>
+      <p class="paywall-msg">Tip <%= otherName %> to keep the conversation going 💕</p>
+      <%- include('partials/tips', { tips: tips, tipName: otherName }) %>
+      <p class="paywall-wait muted">Once you’ve tipped, <%= otherName %> adds more time.</p>
+    </div>
+  <% } %>
+  <% if (paywall.on && isCreator) { %>
+    <div id="hostbar" class="hostbar">
+      <span id="hoststatus" class="host-status">Free time…</span>
+      <button type="button" id="grant-btn" class="btn small">➕ Add <%= Math.round(paywall.freeSeconds / 60) %> min</button>
+    </div>
+  <% } %>
+
   <form id="dm-form" class="chat-form" action="/dm/<%= thread.id %>/reply<%= tokenSuffix %>" method="post">
     <textarea id="dm-reply" name="body" rows="2" maxlength="2000" placeholder="Write a reply…" required></textarea>
     <button type="button" class="emoji-btn" data-target="dm-reply" aria-label="Emoji" title="Emoji">😊</button>
@@ -61,6 +77,53 @@
   }
   markSeen();
 
+  // --- Paywall (tip to continue) --------------------------------------------
+  var paywall = <%- JSON.stringify(paywall) %>;
+  var isCreator = <%= isCreator ? 'true' : 'false' %>;
+  var freeSeconds = paywall.freeSeconds || 120;
+  var clockOffset = (paywall && paywall.now) ? (paywall.now - Date.now()) : 0; // server - client
+  var freebar = document.getElementById('freebar');
+  var freetimeEl = document.getElementById('freetime');
+  var paywallPanel = document.getElementById('paywall');
+  var hoststatus = document.getElementById('hoststatus');
+  var grantBtn = document.getElementById('grant-btn');
+
+  function fmt(s) { s = Math.max(0, Math.round(s)); var m = Math.floor(s / 60), x = s % 60; return m + ':' + (x < 10 ? '0' : '') + x; }
+  function composerEnabled(on) {
+    input.disabled = !on;
+    var btns = form.querySelectorAll('button, .emoji-btn, .photo-btn');
+    for (var i = 0; i < btns.length; i++) btns[i].disabled = !on;
+  }
+  function renderPaywall() {
+    if (!paywall || !paywall.on) return;
+    var remaining = paywall.freeUntil ? (paywall.freeUntil - (Date.now() + clockOffset)) / 1000 : freeSeconds;
+    if (isCreator) {
+      if (hoststatus) {
+        if (!paywall.freeUntil) hoststatus.textContent = 'Waiting for the guest…';
+        else if (remaining > 0) hoststatus.textContent = 'Guest’s free time: ' + fmt(remaining);
+        else hoststatus.textContent = '⏸ Guest paused — out of free time';
+      }
+    } else {
+      var locked = !!paywall.freeUntil && remaining <= 0;
+      if (freebar) freebar.hidden = !(paywall.freeUntil && !locked);
+      if (freetimeEl && !locked) freetimeEl.textContent = fmt(remaining);
+      if (paywallPanel) paywallPanel.hidden = !locked;
+      composerEnabled(!locked);
+    }
+  }
+  renderPaywall();
+  if (paywall.on) setInterval(renderPaywall, 1000);
+
+  if (grantBtn) grantBtn.addEventListener('click', async function () {
+    grantBtn.disabled = true;
+    try {
+      var r = await fetch(base + '/grant' + tokenQ, { method: 'POST', headers: { accept: 'application/json' } });
+      var d = await r.json();
+      if (d.ok) { paywall.freeUntil = d.freeUntil; if (d.now) clockOffset = d.now - Date.now(); renderPaywall(); }
+    } catch (e) {}
+    grantBtn.disabled = false;
+  });
+
   box.addEventListener('scroll', function () {
     atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 40;
   });
@@ -98,6 +161,7 @@
       var r = await fetch(feedUrl(lastId), { headers: { accept: 'application/json' } });
       if (!r.ok) return;
       var data = await r.json();
+      if (data.paywall) { paywall = data.paywall; clockOffset = paywall.now ? paywall.now - Date.now() : clockOffset; renderPaywall(); }
       if (data.messages && data.messages.length) { data.messages.forEach(addMessage); scrollIfNeeded(); markSeen(); }
     } catch (e) {}
   }
@@ -107,14 +171,14 @@
     e.preventDefault();
     var body = input.value.trim();
     if (!body) return;
-    input.value = '';
     try {
       var r = await fetch(replyUrl, {
         method: 'POST',
         headers: { accept: 'application/json', 'content-type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({ body: body }),
       });
-      if (r.ok) { atBottom = true; await poll(); } // poll pulls in our message (and any we missed)
+      if (r.ok) { input.value = ''; atBottom = true; await poll(); } // poll pulls in our message (and any we missed)
+      else if (r.status === 402) { await poll(); } // free time's up — show the paywall
     } catch (e) {}
   });
 
@@ -135,6 +199,7 @@
       var text = await r.text();
       var data = null; try { data = JSON.parse(text); } catch (e) {}
       if (r.ok && data && data.ok) { atBottom = true; await poll(); }
+      else if (data && data.locked) { await poll(); } // free time's up — show the paywall
       else if (data && data.error) alert(data.error);
       else alert('Upload didn’t go through — please refresh the page and try again.');
     } catch (e) { alert('Upload didn’t go through — please refresh the page and try again.'); }

@@ -75,12 +75,18 @@ router.post('/account', requireLogin, async (req, res) => {
   if (!name) {
     return res.render('account', { title: 'My account', error: 'Please keep a display name.' });
   }
+  const paywall = req.body.paywall ? 1 : 0;
+  let freeMin = parseInt(req.body.free_minutes, 10);
+  if (!Number.isFinite(freeMin)) freeMin = 2;
+  freeMin = Math.max(1, Math.min(120, freeMin));
   await db.run(
-    'UPDATE users SET name = ?, bio = ?, cashapp = ?, venmo = ? WHERE id = ?',
+    'UPDATE users SET name = ?, bio = ?, cashapp = ?, venmo = ?, paywall_enabled = ?, free_seconds = ? WHERE id = ?',
     name,
     bio,
     cashapp,
     venmo,
+    paywall,
+    freeMin * 60,
     req.user.id
   );
   flash(req, 'success', 'Saved.');

@@ -136,6 +136,19 @@ textarea { resize: vertical; }
 .dm-starter { margin-top: 16px; }
 .dm-title { margin-bottom: 0; }
 
+/* Paywall — tip to continue */
+.check { display: flex; align-items: center; gap: 8px; font-weight: 600; margin: 12px 0 4px; }
+.check input { width: auto; }
+.freebar { text-align: center; font-size: 0.85rem; color: var(--muted); background: #fbf4f8; border: 1px solid var(--line); border-radius: 10px; padding: 6px 10px; margin: 8px 0; }
+.freebar strong { color: var(--brand-dark); }
+.paywall { border: 1px solid var(--line); border-radius: var(--radius); background: #fff6fb; padding: 16px; margin: 10px 0; text-align: center; }
+.paywall-title { font-weight: 800; font-size: 1.05rem; }
+.paywall-msg { margin: 4px 0 10px; }
+.paywall .tip-bar { justify-content: center; }
+.paywall-wait { margin: 10px 0 0; font-size: 0.85rem; }
+.hostbar { display: flex; align-items: center; gap: 10px; justify-content: space-between; background: #f6f2fb; border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; margin: 8px 0; font-size: 0.9rem; }
+.host-status { font-weight: 600; color: var(--ink); }
+
 /* Inbox list */
 .list { padding: 0; }
 .list-row { display: block; padding: 14px 18px; border-bottom: 1px solid var(--line); color: var(--ink); }

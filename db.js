@@ -9,15 +9,17 @@ const DATA_DIR = path.join(__dirname, 'data');
 const SCHEMA = `
 -- Creators: the people who get tipped. They sign up. (Tippers stay guests.)
 CREATE TABLE IF NOT EXISTS users (
-  id            INTEGER PRIMARY KEY AUTOINCREMENT,
-  email         TEXT UNIQUE NOT NULL,
-  password_hash TEXT NOT NULL,
-  name          TEXT NOT NULL,
-  cashapp       TEXT,
-  venmo         TEXT,
-  bio           TEXT,
-  online_at     TEXT,
-  created_at    TEXT NOT NULL DEFAULT (datetime('now'))
+  id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  email           TEXT UNIQUE NOT NULL,
+  password_hash   TEXT NOT NULL,
+  name            TEXT NOT NULL,
+  cashapp         TEXT,
+  venmo           TEXT,
+  bio             TEXT,
+  online_at       TEXT,
+  paywall_enabled INTEGER NOT NULL DEFAULT 0,   -- 1 = ask for a tip to keep chatting
+  free_seconds    INTEGER NOT NULL DEFAULT 120, -- free time per interval before the paywall
+  created_at      TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 -- The global room. Anyone (guest or creator) can post.
@@ -39,6 +41,7 @@ CREATE TABLE IF NOT EXISTS threads (
   guest_user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,  -- set if visitor has an account
   guest_name    TEXT,
   token         TEXT NOT NULL,        -- private link so a guest can return
+  free_until    INTEGER,              -- epoch ms the guest's free time runs until (paywall)
   created_at    TEXT NOT NULL DEFAULT (datetime('now')),
   last_at       TEXT
 );
@@ -104,6 +107,9 @@ async function migrate() {
   const stmts = [
     'ALTER TABLE room_messages ADD COLUMN image_url TEXT',
     'ALTER TABLE dm_messages ADD COLUMN image_url TEXT',
+    'ALTER TABLE users ADD COLUMN paywall_enabled INTEGER NOT NULL DEFAULT 0',
+    'ALTER TABLE users ADD COLUMN free_seconds INTEGER NOT NULL DEFAULT 120',
+    'ALTER TABLE threads ADD COLUMN free_until INTEGER',
   ];
   for (const sql of stmts) {
     try {

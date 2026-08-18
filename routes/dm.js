@@ -72,6 +72,32 @@ function flash(req, type, msg) {
   req.session.flash = { type, msg };
 }
 
+// Load a thread joined with the creator's info + paywall settings.
+function threadWithCreator(id) {
+  return db.get(
+    `SELECT t.*, c.name AS creator_name, c.cashapp, c.venmo, c.paywall_enabled, c.free_seconds
+       FROM threads t JOIN users c ON c.id = t.creator_id WHERE t.id = ?`,
+    id
+  );
+}
+
+// Paywall status for a thread. Starts the guest's free clock on first contact.
+// The creator is never locked; only the guest gets paused when time runs out.
+async function paywallState(thread, acc) {
+  const on = !!thread.paywall_enabled;
+  const freeSeconds = Number(thread.free_seconds) || 120;
+  if (!on) return { on: false, freeSeconds, freeUntil: null, now: Date.now(), locked: false };
+  let freeUntil = thread.free_until ? Number(thread.free_until) : null;
+  if (!freeUntil && !acc.isCreator) {
+    freeUntil = Date.now() + freeSeconds * 1000;
+    await db.run('UPDATE threads SET free_until = ? WHERE id = ?', freeUntil, thread.id);
+    thread.free_until = freeUntil;
+  }
+  const now = Date.now();
+  const locked = !acc.isCreator && !!freeUntil && now >= freeUntil;
+  return { on: true, freeSeconds, freeUntil, now, locked };
+}
+
 // --- Start a private chat from a profile or the room -----------------------
 router.post('/start', async (req, res) => {
   const creatorId = Number(req.body.creator_id);
@@ -156,11 +182,7 @@ router.get('/activity', async (req, res) => {
 
 // --- A single thread --------------------------------------------------------
 router.get('/:id', async (req, res) => {
-  const thread = await db.get(
-    `SELECT t.*, c.name AS creator_name, c.cashapp, c.venmo
-       FROM threads t JOIN users c ON c.id = t.creator_id WHERE t.id = ?`,
-    req.params.id
-  );
+  const thread = await threadWithCreator(req.params.id);
   if (!thread) return res.status(404).render('error', { title: 'Not found', message: 'Chat not found.' });
   const acc = access(thread, req);
   if (!acc.ok) {
@@ -171,6 +193,7 @@ router.get('/:id', async (req, res) => {
     return res.status(403).render('error', { title: 'Not allowed', message: 'You cannot view this chat.' });
   }
   const messages = await threadMessages(thread.id);
+  const paywall = await paywallState(thread, acc);
   res.render('dm', {
     title: acc.isCreator ? 'Chat with ' + (thread.guest_name || 'Guest') : 'Chat with ' + thread.creator_name,
     thread,
@@ -179,13 +202,14 @@ router.get('/:id', async (req, res) => {
     otherName: acc.isCreator ? thread.guest_name || 'Guest' : thread.creator_name,
     // The visitor can tip the creator from inside the private chat.
     tips: acc.isCreator ? [] : tipLinks(thread),
+    paywall,
     tokenSuffix: req.query.t ? '?t=' + encodeURIComponent(req.query.t) : '',
   });
 });
 
 // --- Live feed: messages after a given id (for polling) --------------------
 router.get('/:id/feed', async (req, res) => {
-  const thread = await db.get('SELECT * FROM threads WHERE id = ?', req.params.id);
+  const thread = await threadWithCreator(req.params.id);
   if (!thread) return res.status(404).json({ ok: false });
   const acc = access(thread, req);
   if (!acc.ok) return res.status(403).json({ ok: false });
@@ -195,12 +219,13 @@ router.get('/:id/feed', async (req, res) => {
     thread.id,
     after
   );
-  res.json({ messages: serializeDm(rows, acc.isCreator) });
+  const paywall = await paywallState(thread, acc);
+  res.json({ messages: serializeDm(rows, acc.isCreator), paywall });
 });
 
 // --- Reply within a thread --------------------------------------------------
 router.post('/:id/reply', async (req, res) => {
-  const thread = await db.get('SELECT * FROM threads WHERE id = ?', req.params.id);
+  const thread = await threadWithCreator(req.params.id);
   if (!thread) return res.status(404).render('error', { title: 'Not found', message: 'Chat not found.' });
   const acc = access(thread, req);
   if (!acc.ok) {
@@ -209,6 +234,12 @@ router.post('/:id/reply', async (req, res) => {
       return res.redirect('/login');
     }
     return res.status(403).render('error', { title: 'Not allowed', message: 'You cannot reply here.' });
+  }
+  // Paywall: once free time is up, the guest can't send until the host adds time.
+  const paywall = await paywallState(thread, acc);
+  if (paywall.locked) {
+    if (wantsJson(req)) return res.status(402).json({ ok: false, locked: true });
+    return res.redirect('/dm/' + thread.id + (req.query.t ? '?t=' + encodeURIComponent(req.query.t) : ''));
   }
   const body = String(req.body.body || '').trim();
   if (body) await addMessage(thread.id, acc.isCreator ? 'creator' : 'guest', body.slice(0, MAX));
@@ -220,10 +251,12 @@ router.post('/:id/reply', async (req, res) => {
 
 // --- Send a picture in a thread (ajax) -------------------------------------
 router.post('/:id/upload', uploadSingle('image'), async (req, res) => {
-  const thread = await db.get('SELECT * FROM threads WHERE id = ?', req.params.id);
+  const thread = await threadWithCreator(req.params.id);
   if (!thread) return res.status(404).json({ ok: false, error: 'Chat not found.' });
   const acc = access(thread, req);
   if (!acc.ok) return res.status(403).json({ ok: false, error: 'Not allowed.' });
+  const paywall = await paywallState(thread, acc);
+  if (paywall.locked) return res.status(402).json({ ok: false, locked: true });
   if (!req.file) return res.status(400).json({ ok: false, error: 'No image selected.' });
   let url;
   try {
@@ -240,6 +273,19 @@ router.post('/:id/upload', uploadSingle('image'), async (req, res) => {
   );
   await db.run("UPDATE threads SET last_at = datetime('now') WHERE id = ?", thread.id);
   res.json({ ok: true });
+});
+
+// --- Host grants more free time (unlocks the paywall) ----------------------
+router.post('/:id/grant', async (req, res) => {
+  const thread = await threadWithCreator(req.params.id);
+  if (!thread) return res.status(404).json({ ok: false });
+  const acc = access(thread, req);
+  if (!acc.isCreator) return res.status(403).json({ ok: false, error: 'Only the host can add time.' });
+  const freeSeconds = Number(thread.free_seconds) || 120;
+  const now = Date.now();
+  const freeUntil = now + freeSeconds * 1000;
+  await db.run('UPDATE threads SET free_until = ? WHERE id = ?', freeUntil, thread.id);
+  res.json({ ok: true, freeUntil, freeSeconds, now });
 });
 
 module.exports = router;
