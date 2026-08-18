@@ -119,6 +119,39 @@ router.get('/', async (req, res) => {
   res.render('inbox', { title: 'Messages', threads });
 });
 
+// --- Notification activity: the viewer's threads + their latest message -----
+// Powers the unread badge and the slide-in "new message" toasts sitewide.
+// NOTE: must be declared before '/:id' so it isn't swallowed as a thread id.
+router.get('/activity', async (req, res) => {
+  const sql = (whereCol) => `
+    SELECT t.id, t.guest_name, t.token, t.creator_id, c.name AS creator_name,
+           m.id AS last_id, m.sender AS last_sender, m.body AS last_body
+      FROM threads t
+      JOIN users c ON c.id = t.creator_id
+      JOIN dm_messages m ON m.id = (SELECT MAX(id) FROM dm_messages WHERE thread_id = t.id)
+     WHERE ${whereCol}
+     ORDER BY m.id DESC LIMIT 30`;
+  let rows;
+  if (req.user) {
+    rows = await db.all(sql('t.creator_id = ? OR t.guest_user_id = ?'), req.user.id, req.user.id);
+  } else {
+    rows = await db.all(sql('t.guest_id = ?'), req.gid);
+  }
+  const threads = rows.map((t) => {
+    const iamCreator = !!req.user && req.user.id === t.creator_id;
+    const ownRole = iamCreator ? 'creator' : 'guest';
+    return {
+      id: t.id,
+      latestId: t.last_id,
+      incoming: t.last_sender !== ownRole, // a message from the OTHER person
+      from: iamCreator ? t.guest_name || 'Guest' : t.creator_name,
+      preview: String(t.last_body || '').slice(0, 60),
+      link: '/dm/' + t.id + (iamCreator || req.user ? '' : '?t=' + t.token),
+    };
+  });
+  res.json({ threads });
+});
+
 // --- A single thread --------------------------------------------------------
 router.get('/:id', async (req, res) => {
   const thread = await db.get(

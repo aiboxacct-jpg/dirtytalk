@@ -11,11 +11,11 @@
   <nav class="nav">
     <a href="/">Room</a>
     <% if (user) { %>
-      <a href="/dm">Messages</a>
+      <a href="/dm">Messages <span id="dm-badge" class="nav-badge" hidden></span></a>
       <a href="/account">Account</a>
       <form action="/logout" method="post" class="inline"><button class="linkbtn" type="submit">Log out</button></form>
     <% } else { %>
-      <a href="/dm">My chats</a>
+      <a href="/dm">My chats <span id="dm-badge" class="nav-badge" hidden></span></a>
       <a href="/login">Log in</a>
       <a href="/signup" class="btn small">Get tipped</a>
     <% } %>
@@ -31,4 +31,7 @@
   <span><%= siteName %> · Adults only (18+) · Be safe and follow your local laws.</span>
 </footer>
 
+<div id="toasts" class="toasts"></div>
+
 <script src="/public/emoji.js" defer></script>
+<script src="/public/notify.js" defer></script>

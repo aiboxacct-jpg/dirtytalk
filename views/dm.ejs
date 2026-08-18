@@ -47,6 +47,16 @@
   var lastId = <%= messages.length ? messages[messages.length - 1].id : 0 %>;
   var atBottom = true;
 
+  // Viewing this chat marks it read (clears its unread badge sitewide).
+  function markSeen() {
+    try {
+      var s = JSON.parse(localStorage.getItem('dt_dm_seen') || '{}');
+      s['<%= thread.id %>'] = lastId;
+      localStorage.setItem('dt_dm_seen', JSON.stringify(s));
+    } catch (e) {}
+  }
+  markSeen();
+
   box.addEventListener('scroll', function () {
     atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 40;
   });
@@ -75,7 +85,7 @@
       var r = await fetch(feedUrl(lastId), { headers: { accept: 'application/json' } });
       if (!r.ok) return;
       var data = await r.json();
-      if (data.messages && data.messages.length) { data.messages.forEach(addMessage); scrollIfNeeded(); }
+      if (data.messages && data.messages.length) { data.messages.forEach(addMessage); scrollIfNeeded(); markSeen(); }
     } catch (e) {}
   }
   setInterval(poll, 4000);

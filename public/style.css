@@ -140,6 +140,17 @@ textarea { resize: vertical; }
 .list-sub { display: block; color: var(--muted); font-size: 0.86rem; }
 .tag { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.04em; background: #efeafc; color: var(--accent); padding: 1px 7px; border-radius: 6px; font-weight: 700; }
 
+/* Unread badge on the Messages nav link */
+.nav-badge { display: inline-block; min-width: 18px; height: 18px; line-height: 18px; padding: 0 5px; text-align: center; font-size: 0.7rem; font-weight: 800; color: #fff; background: var(--brand); border-radius: 999px; vertical-align: middle; }
+
+/* Slide-in message toasts */
+.toasts { position: fixed; right: 14px; bottom: 14px; z-index: 200; display: flex; flex-direction: column; gap: 8px; width: 320px; max-width: calc(100vw - 28px); pointer-events: none; }
+.toast { display: block; background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--brand); border-radius: 12px; box-shadow: 0 10px 34px rgba(60,30,50,0.22); padding: 11px 14px; color: var(--ink); text-decoration: none; transform: translateX(120%); opacity: 0; transition: transform 0.32s ease, opacity 0.32s ease; pointer-events: auto; }
+.toast.show { transform: translateX(0); opacity: 1; }
+.toast:hover { text-decoration: none; background: #faf6fb; }
+.toast-title { font-weight: 800; font-size: 0.9rem; }
+.toast-body { color: var(--muted); font-size: 0.84rem; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
 /* Footer */
 .foot { text-align: center; color: var(--muted); font-size: 0.8rem; padding: 24px 18px 30px; }
 
