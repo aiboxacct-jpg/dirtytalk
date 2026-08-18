@@ -64,8 +64,8 @@
     saveSeen(seen);
 
     if (badge) {
-      if (unread > 0) { badge.textContent = unread > 9 ? '9+' : unread; badge.hidden = false; }
-      else { badge.hidden = true; }
+      if (unread > 0) { badge.textContent = unread > 9 ? '9+' : String(unread); badge.classList.add('show'); }
+      else { badge.textContent = ''; badge.classList.remove('show'); }
     }
     toToast.slice(-3).forEach(showToast);
     primed = true;
