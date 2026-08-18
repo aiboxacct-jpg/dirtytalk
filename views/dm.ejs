@@ -17,7 +17,8 @@
     <% messages.forEach(function(m){ %>
       <div class="msg <%= m.mine ? 'mine' : 'them' %>" data-id="<%= m.id %>">
         <span class="who"><%= m.mine ? 'You' : otherName %></span>
-        <p><%= m.body %></p>
+        <% if (m.image) { %><a class="chat-img-link" href="<%= m.image %>" target="_blank" rel="noopener"><img class="chat-img" src="<%= m.image %>" alt="shared picture" loading="lazy"></a><% } %>
+        <% if (m.body) { %><p><%= m.body %></p><% } %>
       </div>
     <% }); %>
   </div>
@@ -25,6 +26,8 @@
   <form id="dm-form" class="chat-form" action="/dm/<%= thread.id %>/reply<%= tokenSuffix %>" method="post">
     <textarea id="dm-reply" name="body" rows="2" maxlength="2000" placeholder="Write a reply…" required></textarea>
     <button type="button" class="emoji-btn" data-target="dm-reply" aria-label="Emoji" title="Emoji">😊</button>
+    <button type="button" class="photo-btn" id="dm-photo" aria-label="Send a picture" title="Send a picture">📷</button>
+    <input type="file" id="dm-file" accept="image/*" hidden>
     <button class="btn" type="submit">Send</button>
   </form>
 
@@ -43,6 +46,7 @@
   var base = '/dm/<%= thread.id %>';
   var tokenQ = '<%= tokenSuffix %>';           // '?t=...' or ''
   var replyUrl = base + '/reply' + tokenQ;
+  var uploadUrl = base + '/upload' + tokenQ;
   function feedUrl(after) { return base + '/feed' + (tokenQ ? tokenQ + '&' : '?') + 'after=' + after; }
   var lastId = <%= messages.length ? messages[messages.length - 1].id : 0 %>;
   var atBottom = true;
@@ -75,7 +79,16 @@
     var wrap = el('div', 'msg ' + (m.mine ? 'mine' : 'them'));
     wrap.setAttribute('data-id', m.id);
     wrap.appendChild(el('span', 'who', m.mine ? 'You' : otherName));
-    wrap.appendChild(el('p', null, m.body));
+    if (m.image) {
+      var link = document.createElement('a');
+      link.className = 'chat-img-link'; link.href = m.image; link.target = '_blank'; link.rel = 'noopener';
+      var img = document.createElement('img');
+      img.className = 'chat-img'; img.src = m.image; img.alt = 'shared picture'; img.loading = 'lazy';
+      img.addEventListener('load', scrollIfNeeded);
+      link.appendChild(img);
+      wrap.appendChild(link);
+    }
+    if (m.body) wrap.appendChild(el('p', null, m.body));
     box.appendChild(wrap);
     if (m.id > lastId) lastId = m.id;
   }
@@ -103,6 +116,26 @@
       });
       if (r.ok) { atBottom = true; await poll(); } // poll pulls in our message (and any we missed)
     } catch (e) {}
+  });
+
+  // Picture upload
+  var photoBtn = document.getElementById('dm-photo');
+  var fileInput = document.getElementById('dm-file');
+  photoBtn.addEventListener('click', function () { fileInput.click(); });
+  fileInput.addEventListener('change', async function () {
+    var file = fileInput.files[0];
+    if (!file) return;
+    var fd = new FormData();
+    fd.append('image', file);
+    photoBtn.disabled = true;
+    try {
+      var r = await fetch(uploadUrl, { method: 'POST', headers: { accept: 'application/json' }, body: fd });
+      var data = await r.json();
+      if (data.ok) { atBottom = true; await poll(); }
+      else if (data.error) alert(data.error);
+    } catch (e) { alert('Upload failed.'); }
+    photoBtn.disabled = false;
+    fileInput.value = '';
   });
 })();
 </script>

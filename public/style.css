@@ -101,8 +101,13 @@ textarea { resize: vertical; }
 .chat-form .emoji-btn, .chat-form .btn { flex: 0 0 auto; }
 
 /* Emoji picker */
-.emoji-btn { flex: 0 0 auto; border: 1px solid var(--line); background: #fff; border-radius: 10px; padding: 6px 11px; font-size: 1.15rem; line-height: 1.2; cursor: pointer; }
-.emoji-btn:hover { background: #faf6fb; }
+.emoji-btn, .photo-btn { flex: 0 0 auto; border: 1px solid var(--line); background: #fff; border-radius: 10px; padding: 6px 11px; font-size: 1.15rem; line-height: 1.2; cursor: pointer; }
+.emoji-btn:hover, .photo-btn:hover { background: #faf6fb; }
+.photo-btn:disabled { opacity: 0.5; cursor: wait; }
+
+/* Pictures shared in chat */
+.chat-img-link { display: inline-block; margin-top: 3px; }
+.chat-img { max-width: 220px; max-height: 260px; width: auto; height: auto; border-radius: 12px; border: 1px solid var(--line); display: block; }
 .emoji-panel { position: fixed; z-index: 60; width: 296px; max-width: calc(100vw - 16px); max-height: 260px; overflow-y: auto; background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 10px 34px rgba(60,30,50,0.20); padding: 6px 10px 10px; display: none; }
 .emoji-group-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 700; margin: 8px 2px 3px; }
 .emoji-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 1px; }

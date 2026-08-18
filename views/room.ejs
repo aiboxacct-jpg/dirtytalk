@@ -28,7 +28,10 @@
           <span class="rmsg-time"><%= (m.created_at || '').slice(11,16) %></span>
           <% if (m.creatorId && !m.mine) { %><a class="rmsg-dm" href="/u/<%= m.creatorId %>#tip">💬 Chat &amp; tip</a><% } %>
         </div>
-        <div class="rmsg-body"><%= m.body %></div>
+        <% if (m.image) { %>
+          <a class="chat-img-link" href="<%= m.image %>" target="_blank" rel="noopener"><img class="chat-img" src="<%= m.image %>" alt="shared picture" loading="lazy"></a>
+        <% } %>
+        <% if (m.body) { %><div class="rmsg-body"><%= m.body %></div><% } %>
       </div>
     <% }); %>
   </div>
@@ -39,6 +42,8 @@
     <% } %>
     <input type="text" id="room-body" name="body" maxlength="500" placeholder="Type a message…" autocomplete="off" required>
     <button type="button" class="emoji-btn" data-target="room-body" aria-label="Emoji" title="Emoji">😊</button>
+    <button type="button" class="photo-btn" id="room-photo" aria-label="Send a picture" title="Send a picture">📷</button>
+    <input type="file" id="room-file" accept="image/*" hidden>
     <button class="btn" type="submit">Send</button>
   </form>
 </div>
@@ -90,7 +95,16 @@
       head.appendChild(dm);
     }
     wrap.appendChild(head);
-    wrap.appendChild(el('div', 'rmsg-body', m.body));
+    if (m.image) {
+      var link = document.createElement('a');
+      link.className = 'chat-img-link'; link.href = m.image; link.target = '_blank'; link.rel = 'noopener';
+      var img = document.createElement('img');
+      img.className = 'chat-img'; img.src = m.image; img.alt = 'shared picture'; img.loading = 'lazy';
+      img.addEventListener('load', scrollIfNeeded);
+      link.appendChild(img);
+      wrap.appendChild(link);
+    }
+    if (m.body) wrap.appendChild(el('div', 'rmsg-body', m.body));
     box.appendChild(wrap);
     if (m.id > lastId) lastId = m.id;
   }
@@ -121,6 +135,27 @@
       var data = await r.json();
       if (data.ok && data.message) { atBottom = true; addMessage(data.message); scrollIfNeeded(); }
     } catch (e) {}
+  });
+
+  // Picture upload
+  var photoBtn = document.getElementById('room-photo');
+  var fileInput = document.getElementById('room-file');
+  photoBtn.addEventListener('click', function () { fileInput.click(); });
+  fileInput.addEventListener('change', async function () {
+    var file = fileInput.files[0];
+    if (!file) return;
+    var fd = new FormData();
+    fd.append('image', file);
+    if (nameInput) fd.append('name', nameInput.value);
+    photoBtn.disabled = true;
+    try {
+      var r = await fetch('/room/upload', { method: 'POST', headers: { accept: 'application/json' }, body: fd });
+      var data = await r.json();
+      if (data.ok && data.message) { atBottom = true; addMessage(data.message); scrollIfNeeded(); }
+      else if (data.error) alert(data.error);
+    } catch (e) { alert('Upload failed.'); }
+    photoBtn.disabled = false;
+    fileInput.value = '';
   });
 })();
 </script>

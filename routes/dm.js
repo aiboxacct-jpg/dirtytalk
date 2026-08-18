@@ -3,6 +3,7 @@ const express = require('express');
 const crypto = require('crypto');
 const db = require('../db');
 const { tipLinks } = require('../tips');
+const { uploadSingle, uploadImage } = require('../storage');
 
 const router = express.Router();
 const MAX = 2000;
@@ -57,6 +58,7 @@ function serializeDm(rows, isCreator) {
   return rows.map((m) => ({
     id: m.id,
     body: m.body,
+    image: m.image_url || null,
     created_at: m.created_at,
     mine: m.sender === (isCreator ? 'creator' : 'guest'),
   }));
@@ -125,7 +127,7 @@ router.get('/', async (req, res) => {
 router.get('/activity', async (req, res) => {
   const sql = (whereCol) => `
     SELECT t.id, t.guest_name, t.token, t.creator_id, c.name AS creator_name,
-           m.id AS last_id, m.sender AS last_sender, m.body AS last_body
+           m.id AS last_id, m.sender AS last_sender, m.body AS last_body, m.image_url AS last_image
       FROM threads t
       JOIN users c ON c.id = t.creator_id
       JOIN dm_messages m ON m.id = (SELECT MAX(id) FROM dm_messages WHERE thread_id = t.id)
@@ -145,7 +147,7 @@ router.get('/activity', async (req, res) => {
       latestId: t.last_id,
       incoming: t.last_sender !== ownRole, // a message from the OTHER person
       from: iamCreator ? t.guest_name || 'Guest' : t.creator_name,
-      preview: String(t.last_body || '').slice(0, 60),
+      preview: t.last_body ? String(t.last_body).slice(0, 60) : t.last_image ? '📷 Photo' : '',
       link: '/dm/' + t.id + (iamCreator || req.user ? '' : '?t=' + t.token),
     };
   });
@@ -214,6 +216,30 @@ router.post('/:id/reply', async (req, res) => {
   // no-JS callers fall back to a normal redirect (page reload).
   if (wantsJson(req)) return res.json({ ok: !!body });
   res.redirect('/dm/' + thread.id + (req.query.t ? '?t=' + encodeURIComponent(req.query.t) : ''));
+});
+
+// --- Send a picture in a thread (ajax) -------------------------------------
+router.post('/:id/upload', uploadSingle('image'), async (req, res) => {
+  const thread = await db.get('SELECT * FROM threads WHERE id = ?', req.params.id);
+  if (!thread) return res.status(404).json({ ok: false, error: 'Chat not found.' });
+  const acc = access(thread, req);
+  if (!acc.ok) return res.status(403).json({ ok: false, error: 'Not allowed.' });
+  if (!req.file) return res.status(400).json({ ok: false, error: 'No image selected.' });
+  let url;
+  try {
+    url = await uploadImage(req.file.buffer, req.file.originalname);
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: 'Upload failed. Try again.' });
+  }
+  await db.run(
+    'INSERT INTO dm_messages (thread_id, sender, body, image_url) VALUES (?, ?, ?, ?)',
+    thread.id,
+    acc.isCreator ? 'creator' : 'guest',
+    '',
+    url
+  );
+  await db.run("UPDATE threads SET last_at = datetime('now') WHERE id = ?", thread.id);
+  res.json({ ok: true });
 });
 
 module.exports = router;

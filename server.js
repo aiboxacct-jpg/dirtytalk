@@ -20,6 +20,7 @@ app.use(expressLayouts);
 app.set('layout', 'layout');
 
 app.use('/public', express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // local dev image fallback
 app.use(express.urlencoded({ extended: true }));
 
 app.use(

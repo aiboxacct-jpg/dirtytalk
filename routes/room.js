@@ -1,6 +1,7 @@
 // The global room: page, live JSON feed, and posting.
 const express = require('express');
 const db = require('../db');
+const { uploadSingle, uploadImage } = require('../storage');
 
 const router = express.Router();
 const BODY_MAX = 500;
@@ -20,6 +21,7 @@ function serialize(rows, req) {
     id: m.id,
     name: m.name,
     body: m.body,
+    image: m.image_url || null,
     created_at: m.created_at,
     creatorId: m.user_id || null, // set => a signed-up creator you can DM + tip
     mine:
@@ -82,6 +84,34 @@ router.post('/room', async (req, res) => {
     return res.json({ ok: true, message: serialize([m], req)[0] });
   }
   res.redirect('/');
+});
+
+// Post a picture to the room (ajax only)
+router.post('/room/upload', uploadSingle('image'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ ok: false, error: 'No image selected.' });
+  const name = displayName(req, req.body.name);
+  const key = req.user ? 'u' + req.user.id : 'g' + req.gid;
+  const now = Date.now();
+  if (lastPost.get(key) && now - lastPost.get(key) < COOLDOWN_MS) {
+    return res.status(429).json({ ok: false, error: 'Slow down a moment.' });
+  }
+  lastPost.set(key, now);
+  let url;
+  try {
+    url = await uploadImage(req.file.buffer, req.file.originalname);
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: 'Upload failed. Try again.' });
+  }
+  const info = await db.run(
+    'INSERT INTO room_messages (user_id, gid, name, body, image_url) VALUES (?, ?, ?, ?, ?)',
+    req.user ? req.user.id : null,
+    req.user ? null : req.gid,
+    name,
+    '',
+    url
+  );
+  const m = await db.get('SELECT * FROM room_messages WHERE id = ?', Number(info.lastInsertRowid));
+  res.json({ ok: true, message: serialize([m], req)[0] });
 });
 
 module.exports = router;

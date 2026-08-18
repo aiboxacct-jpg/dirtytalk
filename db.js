@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS room_messages (
   gid        TEXT,                    -- guest device id
   name       TEXT NOT NULL,
   body       TEXT NOT NULL,
+  image_url  TEXT,                    -- set when the message is a picture
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -47,6 +48,7 @@ CREATE TABLE IF NOT EXISTS dm_messages (
   thread_id  INTEGER NOT NULL REFERENCES threads(id) ON DELETE CASCADE,
   sender     TEXT NOT NULL,           -- 'creator' | 'guest'
   body       TEXT NOT NULL,
+  image_url  TEXT,                    -- set when the message is a picture
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -97,9 +99,25 @@ async function tursoBackend() {
   };
 }
 
+// Idempotent column additions for databases created before a column existed.
+async function migrate() {
+  const stmts = [
+    'ALTER TABLE room_messages ADD COLUMN image_url TEXT',
+    'ALTER TABLE dm_messages ADD COLUMN image_url TEXT',
+  ];
+  for (const sql of stmts) {
+    try {
+      await backend.exec(sql);
+    } catch (_) {
+      /* column already exists — ignore */
+    }
+  }
+}
+
 async function init() {
   backend = usingTurso ? await tursoBackend() : nodeSqliteBackend();
   await backend.exec(SCHEMA);
+  await migrate();
   console.log('Database ready (' + (usingTurso ? 'Turso/libSQL' : 'local node:sqlite') + ').');
 }
 
