@@ -1,7 +1,8 @@
 // The global room: page, live JSON feed, and posting.
 const express = require('express');
 const db = require('../db');
-const { uploadSingle, uploadImage } = require('../storage');
+const { uploadSingle, uploadImage, deleteImage } = require('../storage');
+const { requireAdmin } = require('../middleware');
 
 const router = express.Router();
 const BODY_MAX = 500;
@@ -113,6 +114,23 @@ router.post('/room/upload', uploadSingle('image'), async (req, res) => {
   );
   const m = await db.get('SELECT * FROM room_messages WHERE id = ?', Number(info.lastInsertRowid));
   res.json({ ok: true, message: serialize([m], req)[0] });
+});
+
+// --- Admin moderation ------------------------------------------------------
+// Delete one message (and its picture, if any).
+router.post('/room/:id/delete', requireAdmin, async (req, res) => {
+  const m = await db.get('SELECT image_url FROM room_messages WHERE id = ?', req.params.id);
+  await db.run('DELETE FROM room_messages WHERE id = ?', req.params.id);
+  if (m && m.image_url) deleteImage(m.image_url); // best-effort, don't block the response
+  res.json({ ok: true });
+});
+
+// Clear the whole room (removes every message + its pictures).
+router.post('/room/clear', requireAdmin, async (req, res) => {
+  const imgs = await db.all('SELECT image_url FROM room_messages WHERE image_url IS NOT NULL');
+  await db.run('DELETE FROM room_messages');
+  imgs.forEach((r) => deleteImage(r.image_url));
+  res.json({ ok: true });
 });
 
 module.exports = router;

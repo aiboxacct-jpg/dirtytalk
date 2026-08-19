@@ -49,6 +49,34 @@ function uploadImage(buffer, originalName) {
   return Promise.resolve('/uploads/' + name);
 }
 
+// Pull the Cloudinary public_id (e.g. "dirtytalk/abc123") out of a delivered URL.
+function cloudinaryPublicId(url) {
+  try {
+    const parts = new URL(url).pathname.split('/');
+    const i = parts.indexOf('upload');
+    if (i === -1) return null;
+    const rest = parts.slice(i + 1).filter((s) => s && !/^v\d+$/.test(s) && !/[,=]/.test(s));
+    return rest.join('/').replace(/\.[^./]+$/, '') || null;
+  } catch (e) {
+    return null;
+  }
+}
+
+// Best-effort delete of an uploaded image (Cloudinary asset or local file).
+async function deleteImage(url) {
+  if (!url) return;
+  try {
+    if (useCloudinary && /res\.cloudinary\.com/.test(url)) {
+      const pid = cloudinaryPublicId(url);
+      if (pid) await cloudinary.uploader.destroy(pid);
+    } else if (url.indexOf('/uploads/') === 0) {
+      fs.unlinkSync(path.join(UPLOAD_DIR, path.basename(url)));
+    }
+  } catch (e) {
+    /* ignore — the message is removed either way */
+  }
+}
+
 // multer as middleware that returns JSON (not an HTML error page) on failure.
 function uploadSingle(field) {
   const mw = upload.single(field);
@@ -62,4 +90,4 @@ function uploadSingle(field) {
     });
 }
 
-module.exports = { upload, uploadSingle, uploadImage, UPLOAD_DIR };
+module.exports = { upload, uploadSingle, uploadImage, deleteImage, UPLOAD_DIR };

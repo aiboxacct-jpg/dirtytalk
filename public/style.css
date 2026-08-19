@@ -86,6 +86,10 @@ textarea { resize: vertical; }
 .rmsg-name.creator { color: var(--brand-dark); }
 .rmsg-dm { font-size: 0.72rem; font-weight: 700; color: var(--brand-dark); background: #fbe9f1; padding: 1px 8px; border-radius: 999px; white-space: nowrap; }
 .rmsg-dm:hover { background: #f6d6e7; text-decoration: none; }
+.rmsg-del { border: none; background: none; color: var(--danger); cursor: pointer; font-size: 0.72rem; padding: 0 2px; line-height: 1; }
+.rmsg-del:hover { color: #a52020; }
+.admin-bar { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin: 6px 0 -2px; }
+.admin-tag { font-size: 0.72rem; font-weight: 800; color: var(--accent); background: #efeafc; padding: 2px 8px; border-radius: 999px; }
 .rmsg-body { background: #f4eff8; border-radius: 12px; padding: 8px 12px; display: inline-block; margin-top: 2px; word-break: break-word; }
 .rmsg.mine .rmsg-body { background: #fbe4ef; }
 
