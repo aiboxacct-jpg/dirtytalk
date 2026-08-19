@@ -146,8 +146,11 @@ textarea { resize: vertical; }
 .paywall-msg { margin: 4px 0 10px; }
 .paywall .tip-bar { justify-content: center; }
 .paywall-wait { margin: 10px 0 0; font-size: 0.85rem; }
-.hostbar { display: flex; align-items: center; gap: 10px; justify-content: space-between; background: #f6f2fb; border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; margin: 8px 0; font-size: 0.9rem; }
+.hostbar { display: flex; align-items: center; gap: 10px; justify-content: space-between; flex-wrap: wrap; background: #f6f2fb; border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; margin: 8px 0; font-size: 0.9rem; }
 .host-status { font-weight: 600; color: var(--ink); }
+.host-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.btn.muted { background: #ece6f2; color: var(--ink); }
+.btn.muted:hover { background: #e0d8ea; }
 
 /* Inbox list */
 .list { padding: 0; }

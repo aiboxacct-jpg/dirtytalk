@@ -23,7 +23,7 @@
     <% }); %>
   </div>
 
-  <% if (paywall.on && !isCreator) { %>
+  <% if (!isCreator) { %>
     <div id="freebar" class="freebar" hidden>⏳ Free time left: <strong id="freetime">--:--</strong></div>
     <div id="paywall" class="paywall" hidden>
       <div class="paywall-title">🔒 Free time’s up</div>
@@ -32,10 +32,15 @@
       <p class="paywall-wait muted">Once you’ve tipped, <%= otherName %> adds more time.</p>
     </div>
   <% } %>
-  <% if (paywall.on && isCreator) { %>
+  <% if (isCreator) { %>
     <div id="hostbar" class="hostbar">
-      <span id="hoststatus" class="host-status">Free time…</span>
-      <button type="button" id="grant-btn" class="btn small">➕ Add <%= Math.round(paywall.freeSeconds / 60) %> min</button>
+      <span id="hoststatus" class="host-status"></span>
+      <span class="host-actions">
+        <button type="button" id="pw-start" class="btn small" hidden>▶ Start paid time</button>
+        <button type="button" id="pw-lock" class="btn small muted" hidden>🔒 Lock now</button>
+        <button type="button" id="pw-add" class="btn small" hidden>➕ Add <%= Math.round(paywall.freeSeconds / 60) %> min</button>
+        <button type="button" id="pw-stop" class="btn small muted" hidden>⏹ Stop</button>
+      </span>
     </div>
   <% } %>
 
@@ -77,16 +82,18 @@
   }
   markSeen();
 
-  // --- Paywall (tip to continue) --------------------------------------------
+  // --- Paywall (tip to continue) — host toggles it live ----------------------
   var paywall = <%- JSON.stringify(paywall) %>;
   var isCreator = <%= isCreator ? 'true' : 'false' %>;
-  var freeSeconds = paywall.freeSeconds || 120;
   var clockOffset = (paywall && paywall.now) ? (paywall.now - Date.now()) : 0; // server - client
   var freebar = document.getElementById('freebar');
   var freetimeEl = document.getElementById('freetime');
   var paywallPanel = document.getElementById('paywall');
   var hoststatus = document.getElementById('hoststatus');
-  var grantBtn = document.getElementById('grant-btn');
+  var pwStart = document.getElementById('pw-start');
+  var pwLock = document.getElementById('pw-lock');
+  var pwAdd = document.getElementById('pw-add');
+  var pwStop = document.getElementById('pw-stop');
 
   function fmt(s) { s = Math.max(0, Math.round(s)); var m = Math.floor(s / 60), x = s % 60; return m + ':' + (x < 10 ? '0' : '') + x; }
   function composerEnabled(on) {
@@ -94,35 +101,50 @@
     var btns = form.querySelectorAll('button, .emoji-btn, .photo-btn');
     for (var i = 0; i < btns.length; i++) btns[i].disabled = !on;
   }
+  function show(el, on) { if (el) el.hidden = !on; }
   function renderPaywall() {
-    if (!paywall || !paywall.on) return;
-    var remaining = paywall.freeUntil ? (paywall.freeUntil - (Date.now() + clockOffset)) / 1000 : freeSeconds;
+    var on = !!(paywall && paywall.on);
+    var hasClock = on && !!paywall.freeUntil;
+    var remaining = hasClock ? (paywall.freeUntil - (Date.now() + clockOffset)) / 1000 : null;
+    var locked = hasClock && remaining <= 0;
     if (isCreator) {
       if (hoststatus) {
-        if (!paywall.freeUntil) hoststatus.textContent = 'Waiting for the guest…';
-        else if (remaining > 0) hoststatus.textContent = 'Guest’s free time: ' + fmt(remaining);
-        else hoststatus.textContent = '⏸ Guest paused — out of free time';
+        hoststatus.textContent = !on ? 'Free chat — paid time is off'
+          : !hasClock ? 'Paid time on'
+          : remaining > 0 ? '⏳ Guest’s free time: ' + fmt(remaining)
+          : '⏸ Guest paused — waiting for a tip';
       }
-    } else {
-      var locked = !!paywall.freeUntil && remaining <= 0;
-      if (freebar) freebar.hidden = !(paywall.freeUntil && !locked);
-      if (freetimeEl && !locked) freetimeEl.textContent = fmt(remaining);
-      if (paywallPanel) paywallPanel.hidden = !locked;
-      composerEnabled(!locked);
+      show(pwStart, !on);
+      show(pwStop, on);
+      show(pwLock, on && hasClock && !locked);
+      show(pwAdd, on && locked);
+      return;
     }
+    // Guest
+    if (!on) { show(freebar, false); show(paywallPanel, false); composerEnabled(true); return; }
+    show(freebar, hasClock && !locked);
+    if (freetimeEl && !locked && remaining != null) freetimeEl.textContent = fmt(remaining);
+    show(paywallPanel, locked);
+    composerEnabled(!locked);
   }
   renderPaywall();
-  if (paywall.on) setInterval(renderPaywall, 1000);
+  setInterval(renderPaywall, 1000);
 
-  if (grantBtn) grantBtn.addEventListener('click', async function () {
-    grantBtn.disabled = true;
+  async function hostAction(action) {
     try {
-      var r = await fetch(base + '/grant' + tokenQ, { method: 'POST', headers: { accept: 'application/json' } });
+      var r = await fetch(base + '/host' + tokenQ, {
+        method: 'POST',
+        headers: { accept: 'application/json', 'content-type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ action: action }),
+      });
       var d = await r.json();
-      if (d.ok) { paywall.freeUntil = d.freeUntil; if (d.now) clockOffset = d.now - Date.now(); renderPaywall(); }
+      if (d.ok && d.paywall) { paywall = d.paywall; clockOffset = paywall.now ? paywall.now - Date.now() : clockOffset; renderPaywall(); }
     } catch (e) {}
-    grantBtn.disabled = false;
-  });
+  }
+  if (pwStart) pwStart.addEventListener('click', function () { hostAction('start'); });
+  if (pwLock) pwLock.addEventListener('click', function () { hostAction('lock'); });
+  if (pwAdd) pwAdd.addEventListener('click', function () { hostAction('add'); });
+  if (pwStop) pwStop.addEventListener('click', function () { hostAction('stop'); });
 
   box.addEventListener('scroll', function () {
     atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 40;

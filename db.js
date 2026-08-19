@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS threads (
   guest_name    TEXT,
   token         TEXT NOT NULL,        -- private link so a guest can return
   free_until    INTEGER,              -- epoch ms the guest's free time runs until (paywall)
+  paywall_on    INTEGER,              -- per-chat override: NULL = use account default, else 0/1
   created_at    TEXT NOT NULL DEFAULT (datetime('now')),
   last_at       TEXT
 );
@@ -110,6 +111,7 @@ async function migrate() {
     'ALTER TABLE users ADD COLUMN paywall_enabled INTEGER NOT NULL DEFAULT 0',
     'ALTER TABLE users ADD COLUMN free_seconds INTEGER NOT NULL DEFAULT 120',
     'ALTER TABLE threads ADD COLUMN free_until INTEGER',
+    'ALTER TABLE threads ADD COLUMN paywall_on INTEGER',
   ];
   for (const sql of stmts) {
     try {

@@ -84,7 +84,8 @@ function threadWithCreator(id) {
 // Paywall status for a thread. Starts the guest's free clock on first contact.
 // The creator is never locked; only the guest gets paused when time runs out.
 async function paywallState(thread, acc) {
-  const on = !!thread.paywall_enabled;
+  // Per-chat override wins; otherwise fall back to the creator's account default.
+  const on = thread.paywall_on != null ? !!thread.paywall_on : !!thread.paywall_enabled;
   const freeSeconds = Number(thread.free_seconds) || 120;
   if (!on) return { on: false, freeSeconds, freeUntil: null, now: Date.now(), locked: false };
   let freeUntil = thread.free_until ? Number(thread.free_until) : null;
@@ -275,17 +276,29 @@ router.post('/:id/upload', uploadSingle('image'), async (req, res) => {
   res.json({ ok: true });
 });
 
-// --- Host grants more free time (unlocks the paywall) ----------------------
-router.post('/:id/grant', async (req, res) => {
+// --- Host controls the paywall live, from inside the chat ------------------
+// action: start (turn on + fresh free window) | add (more time) | lock (cut
+// the free time off now) | stop (turn the paywall off for this chat)
+router.post('/:id/host', async (req, res) => {
   const thread = await threadWithCreator(req.params.id);
   if (!thread) return res.status(404).json({ ok: false });
   const acc = access(thread, req);
-  if (!acc.isCreator) return res.status(403).json({ ok: false, error: 'Only the host can add time.' });
+  if (!acc.isCreator) return res.status(403).json({ ok: false, error: 'Only the host can do that.' });
   const freeSeconds = Number(thread.free_seconds) || 120;
   const now = Date.now();
-  const freeUntil = now + freeSeconds * 1000;
-  await db.run('UPDATE threads SET free_until = ? WHERE id = ?', freeUntil, thread.id);
-  res.json({ ok: true, freeUntil, freeSeconds, now });
+  const action = String(req.body.action || '');
+  if (action === 'start' || action === 'add') {
+    await db.run('UPDATE threads SET paywall_on = 1, free_until = ? WHERE id = ?', now + freeSeconds * 1000, thread.id);
+  } else if (action === 'lock') {
+    await db.run('UPDATE threads SET paywall_on = 1, free_until = ? WHERE id = ?', now, thread.id);
+  } else if (action === 'stop') {
+    await db.run('UPDATE threads SET paywall_on = 0 WHERE id = ?', thread.id);
+  } else {
+    return res.status(400).json({ ok: false, error: 'Unknown action.' });
+  }
+  const fresh = await threadWithCreator(thread.id);
+  const paywall = await paywallState(fresh, acc);
+  res.json({ ok: true, paywall });
 });
 
 module.exports = router;
