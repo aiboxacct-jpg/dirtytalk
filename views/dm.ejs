@@ -37,8 +37,11 @@
       <label class="free-toggle" title="When checked, this chat is free. Uncheck to charge a tip to continue."><input type="checkbox" id="pw-free"> Free chat</label>
       <span id="hoststatus" class="host-status"></span>
       <span class="host-actions">
-        <button type="button" id="pw-lock" class="btn small muted" hidden>🔒 Lock now</button>
-        <button type="button" id="pw-add" class="btn small" hidden>➕ Add <%= Math.round(paywall.freeSeconds / 60) %> min</button>
+        <button type="button" id="pw-lock" class="btn small muted" hidden>💸 Turn on Pay Mode</button>
+        <span id="pw-add-wrap" class="add-wrap" hidden>
+          <input type="number" id="pw-add-min" class="add-min" min="1" max="240" step="1" value="<%= Math.round(paywall.freeSeconds / 60) %>" aria-label="Minutes to add">
+          <button type="button" id="pw-add" class="btn small">➕ Add min</button>
+        </span>
       </span>
     </div>
   <% } %>
@@ -92,6 +95,8 @@
   var pwFree = document.getElementById('pw-free');
   var pwLock = document.getElementById('pw-lock');
   var pwAdd = document.getElementById('pw-add');
+  var pwAddWrap = document.getElementById('pw-add-wrap');
+  var pwAddMin = document.getElementById('pw-add-min');
 
   function fmt(s) { s = Math.max(0, Math.round(s)); var m = Math.floor(s / 60), x = s % 60; return m + ':' + (x < 10 ? '0' : '') + x; }
   function composerEnabled(on) {
@@ -114,7 +119,7 @@
           : '⏸ Guest paused — waiting for a tip';
       }
       show(pwLock, on && hasClock && !locked);
-      show(pwAdd, on && locked);
+      show(pwAddWrap, on && locked);
       return;
     }
     // Guest
@@ -127,12 +132,14 @@
   renderPaywall();
   setInterval(renderPaywall, 1000);
 
-  async function hostAction(action) {
+  async function hostAction(action, minutes) {
     try {
+      var params = { action: action };
+      if (minutes != null) params.minutes = String(minutes);
       var r = await fetch(base + '/host' + tokenQ, {
         method: 'POST',
         headers: { accept: 'application/json', 'content-type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ action: action }),
+        body: new URLSearchParams(params),
       });
       var d = await r.json();
       if (d.ok && d.paywall) { paywall = d.paywall; clockOffset = paywall.now ? paywall.now - Date.now() : clockOffset; renderPaywall(); }
@@ -144,7 +151,11 @@
     hostAction(pwFree.checked ? 'stop' : 'start');
   });
   if (pwLock) pwLock.addEventListener('click', function () { hostAction('lock'); });
-  if (pwAdd) pwAdd.addEventListener('click', function () { hostAction('add'); });
+  if (pwAdd) pwAdd.addEventListener('click', function () {
+    var m = parseInt(pwAddMin && pwAddMin.value, 10);
+    if (!Number.isFinite(m) || m < 1) m = 2;
+    hostAction('add', m);
+  });
 
   box.addEventListener('scroll', function () {
     atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 40;

@@ -203,6 +203,8 @@ button.tip-btn { border: none; cursor: pointer; font-family: inherit; }
 .host-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .free-toggle { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 0.9rem; cursor: pointer; white-space: nowrap; }
 .free-toggle input { width: auto; margin: 0; }
+.add-wrap { display: inline-flex; align-items: center; gap: 5px; }
+.add-min { width: 58px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; font: inherit; text-align: center; }
 .btn.muted { background: #ece6f2; color: var(--ink); }
 .btn.muted:hover { background: #e0d8ea; }
 

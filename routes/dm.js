@@ -287,8 +287,14 @@ router.post('/:id/host', async (req, res) => {
   const freeSeconds = Number(thread.free_seconds) || 120;
   const now = Date.now();
   const action = String(req.body.action || '');
-  if (action === 'start' || action === 'add') {
+  if (action === 'start') {
     await db.run('UPDATE threads SET paywall_on = 1, free_until = ? WHERE id = ?', now + freeSeconds * 1000, thread.id);
+  } else if (action === 'add') {
+    // Host can add a custom number of minutes (defaults to their free window).
+    let minutes = parseInt(req.body.minutes, 10);
+    if (!Number.isFinite(minutes)) minutes = Math.round(freeSeconds / 60);
+    minutes = Math.max(1, Math.min(240, minutes));
+    await db.run('UPDATE threads SET paywall_on = 1, free_until = ? WHERE id = ?', now + minutes * 60000, thread.id);
   } else if (action === 'lock') {
     await db.run('UPDATE threads SET paywall_on = 1, free_until = ? WHERE id = ?', now, thread.id);
   } else if (action === 'stop') {
