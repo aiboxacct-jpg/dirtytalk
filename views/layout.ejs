@@ -36,3 +36,14 @@
 
 <script src="/public/emoji.js" defer></script>
 <script src="/public/notify.js" defer></script>
+<script>
+// Tap-to-copy (crypto tip addresses, etc.)
+document.addEventListener('click', function (e) {
+  var b = e.target.closest('[data-copy]');
+  if (!b) return;
+  var val = b.getAttribute('data-copy');
+  try { navigator.clipboard.writeText(val); } catch (err) {}
+  var h = b.querySelector('.tip-handle');
+  if (h) { var prev = h.textContent; h.textContent = 'Copied!'; setTimeout(function () { h.textContent = prev; }, 1200); }
+});
+</script>

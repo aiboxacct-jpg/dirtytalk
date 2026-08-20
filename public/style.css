@@ -153,6 +153,18 @@ textarea { resize: vertical; }
 .tip-btn .tip-handle { font-weight: 500; opacity: 0.92; font-size: 0.82rem; }
 .tip-btn.cashapp { background: #00c244; }
 .tip-btn.venmo { background: #3d95ce; }
+.tip-btn.paypal { background: #003087; }
+.tip-btn.crypto { background: #f7931a; }
+button.tip-btn { border: none; cursor: pointer; font-family: inherit; }
+.tip-btn.static { cursor: default; }
+
+/* Profile photo / avatar */
+.avatar-row { display: flex; align-items: center; gap: 14px; margin: 12px 0 6px; }
+.avatar-preview { width: 64px; height: 64px; flex: 0 0 auto; border-radius: 50%; background-color: #f0ebf5; background-size: cover; background-position: center; display: inline-flex; align-items: center; justify-content: center; font-size: 1.5rem; border: 1px solid var(--line); }
+.avatar-preview.lg { width: 84px; height: 84px; }
+.profile-head { display: flex; align-items: center; gap: 14px; }
+.profile-head h1 { margin: 0; }
+.chip-avatar { display: inline-block; width: 18px; height: 18px; border-radius: 50%; background-size: cover; background-position: center; vertical-align: middle; margin-right: 5px; background-color: #f0ebf5; }
 
 .dm-starter { margin-top: 16px; }
 .dm-title { margin-bottom: 0; }

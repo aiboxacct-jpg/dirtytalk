@@ -14,7 +14,7 @@
   <div class="creators-strip">
     <span class="strip-label">Here now:</span>
     <% creators.forEach(function(c){ %>
-      <a class="creator-chip" href="/u/<%= c.id %>"><%= c.name %><% if (c.verified) { %> <span class="verified" title="Verified">✔</span><% } %></a>
+      <a class="creator-chip" href="/u/<%= c.id %>"><% if (c.avatar_url) { %><span class="chip-avatar" style="background-image:url('<%= c.avatar_url %>')"></span><% } %><%= c.name %><% if (c.verified) { %> <span class="verified" title="Verified">✔</span><% } %></a>
     <% }); %>
   </div>
 <% } %>

@@ -6,9 +6,19 @@
   <div class="tip-bar">
     <span class="tip-lead">💸 Tip <%= _name %></span>
     <% _tips.forEach(function(t){ %>
-      <a class="tip-btn <%= t.kind %>" href="<%= t.href %>" target="_blank" rel="noopener noreferrer">
-        <%= t.label %> <span class="tip-handle"><%= t.display %></span>
-      </a>
+      <% if (t.kind === 'crypto') { %>
+        <button type="button" class="tip-btn crypto" data-copy="<%= t.copy %>" title="Tap to copy: <%= t.copy %>">
+          <%= t.label %> <span class="tip-handle"><%= t.display %></span>
+        </button>
+      <% } else if (t.href) { %>
+        <a class="tip-btn <%= t.kind %>" href="<%= t.href %>" target="_blank" rel="noopener noreferrer">
+          <%= t.label %> <span class="tip-handle"><%= t.display %></span>
+        </a>
+      <% } else { %>
+        <span class="tip-btn <%= t.kind %> static" title="<%= t.display %>">
+          <%= t.label %> <span class="tip-handle"><%= t.display %></span>
+        </span>
+      <% } %>
     <% }); %>
   </div>
 <% } %>

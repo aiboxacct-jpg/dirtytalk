@@ -45,7 +45,7 @@ router.get('/', async (req, res) => {
   rows.reverse();
   // A few creators to show as "here now" — most recently active.
   const creators = await db.all(
-    'SELECT id, name, cashapp, venmo, verified FROM users ORDER BY COALESCE(online_at, created_at) DESC LIMIT 12'
+    'SELECT id, name, verified, avatar_url FROM users ORDER BY COALESCE(online_at, created_at) DESC LIMIT 12'
   );
   res.render('room', {
     title: 'Room',

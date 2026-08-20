@@ -15,7 +15,10 @@ CREATE TABLE IF NOT EXISTS users (
   name            TEXT NOT NULL,
   cashapp         TEXT,
   venmo           TEXT,
+  paypal          TEXT,
+  crypto          TEXT,
   bio             TEXT,
+  avatar_url      TEXT,
   online_at       TEXT,
   verified        INTEGER NOT NULL DEFAULT 0,   -- 1 = verified badge (admin-granted)
   paywall_enabled INTEGER NOT NULL DEFAULT 0,   -- 1 = ask for a tip to keep chatting
@@ -114,6 +117,9 @@ async function migrate() {
     'ALTER TABLE threads ADD COLUMN free_until INTEGER',
     'ALTER TABLE threads ADD COLUMN paywall_on INTEGER',
     'ALTER TABLE users ADD COLUMN verified INTEGER NOT NULL DEFAULT 0',
+    'ALTER TABLE users ADD COLUMN paypal TEXT',
+    'ALTER TABLE users ADD COLUMN crypto TEXT',
+    'ALTER TABLE users ADD COLUMN avatar_url TEXT',
   ];
   for (const sql of stmts) {
     try {

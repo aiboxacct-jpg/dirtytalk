@@ -6,6 +6,15 @@
   <p class="hint">Your public profile & tip link:
     <a href="/u/<%= user.id %>" target="_blank" rel="noopener">/u/<%= user.id %></a> — share it anywhere.</p>
 
+  <div class="avatar-row">
+    <span id="avatar-img" class="avatar-preview" <% if (user.avatar_url) { %>style="background-image:url('<%= user.avatar_url %>')"<% } %>><% if (!user.avatar_url) { %>📷<% } %></span>
+    <div>
+      <button type="button" class="btn small" id="avatar-btn">📷 Upload profile photo</button>
+      <input type="file" id="avatar-file" accept="image/*" hidden>
+      <p class="hint" style="margin:6px 0 0;">Shown on your public profile.</p>
+    </div>
+  </div>
+
   <form action="/account" method="post">
     <label for="name">Display name</label>
     <input type="text" id="name" name="name" maxlength="30" value="<%= user.name %>" required>
@@ -22,6 +31,12 @@
     <label for="venmo">Venmo (@username)</label>
     <input type="text" id="venmo" name="venmo" value="<%= user.venmo || '' %>" placeholder="@your-venmo">
 
+    <label for="paypal">PayPal (email or PayPal.Me link)</label>
+    <input type="text" id="paypal" name="paypal" value="<%= user.paypal || '' %>" placeholder="you@email.com or paypal.me/you">
+
+    <label for="crypto">Crypto address (BTC, ETH, USDT…)</label>
+    <input type="text" id="crypto" name="crypto" value="<%= user.crypto || '' %>" placeholder="your wallet address">
+
     <h2>Paid chat (tip to continue)</h2>
     <p class="hint">Give guests some free time in private chats, then pause them with your tip buttons until you tap “add time.” You unlock once you see the tip land. This is just the default — you can also flip paid time on/off live from inside any chat.</p>
     <label class="check">
@@ -34,3 +49,32 @@
     <button class="btn" type="submit" style="width:100%;margin-top:16px;">Save changes</button>
   </form>
 </div>
+
+<script>
+(function () {
+  var btn = document.getElementById('avatar-btn');
+  var file = document.getElementById('avatar-file');
+  var img = document.getElementById('avatar-img');
+  if (!btn || !file) return;
+  btn.addEventListener('click', function () { file.click(); });
+  file.addEventListener('change', async function () {
+    var f = file.files[0];
+    if (!f) return;
+    if (f.size > 10 * 1024 * 1024) { alert('That image is too large (max 10 MB).'); file.value = ''; return; }
+    var fd = new FormData();
+    fd.append('image', f);
+    btn.disabled = true;
+    var label = btn.textContent;
+    btn.textContent = 'Uploading…';
+    try {
+      var r = await fetch('/account/avatar', { method: 'POST', headers: { accept: 'application/json' }, body: fd });
+      var d = null; try { d = JSON.parse(await r.text()); } catch (e) {}
+      if (r.ok && d && d.ok && d.url) { img.style.backgroundImage = "url('" + d.url + "')"; img.textContent = ''; }
+      else alert((d && d.error) || 'Upload failed — please try again.');
+    } catch (e) { alert('Upload failed — please try again.'); }
+    btn.disabled = false;
+    btn.textContent = label;
+    file.value = '';
+  });
+})();
+</script>

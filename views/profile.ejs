@@ -1,7 +1,12 @@
 <p class="back"><a href="/">← Back to the room</a></p>
 
 <div class="card profile">
-  <h1><%= creator.name %><% if (creator.verified) { %> <span class="verified" title="Verified">✔</span><% } %></h1>
+  <div class="profile-head">
+    <% if (creator.avatar_url) { %>
+      <span class="avatar-preview lg" style="background-image:url('<%= creator.avatar_url %>')"></span>
+    <% } %>
+    <h1><%= creator.name %><% if (creator.verified) { %> <span class="verified" title="Verified">✔</span><% } %></h1>
+  </div>
   <% if (creator.bio) { %><p class="bio"><%= creator.bio %></p><% } %>
 
   <% if (isOwner) { %>

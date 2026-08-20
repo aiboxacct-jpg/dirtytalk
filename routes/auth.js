@@ -3,6 +3,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const db = require('../db');
 const { requireLogin } = require('../middleware');
+const { uploadSingle, uploadImage, deleteImage } = require('../storage');
 
 const router = express.Router();
 
@@ -72,6 +73,8 @@ router.post('/account', requireLogin, async (req, res) => {
   const bio = String(req.body.bio || '').trim().slice(0, 500);
   const cashapp = String(req.body.cashapp || '').trim().slice(0, 60);
   const venmo = String(req.body.venmo || '').trim().slice(0, 60);
+  const paypal = String(req.body.paypal || '').trim().slice(0, 120);
+  const crypto = String(req.body.crypto || '').trim().slice(0, 120);
   if (!name) {
     return res.render('account', { title: 'My account', error: 'Please keep a display name.' });
   }
@@ -80,17 +83,34 @@ router.post('/account', requireLogin, async (req, res) => {
   if (!Number.isFinite(freeMin)) freeMin = 2;
   freeMin = Math.max(1, Math.min(120, freeMin));
   await db.run(
-    'UPDATE users SET name = ?, bio = ?, cashapp = ?, venmo = ?, paywall_enabled = ?, free_seconds = ? WHERE id = ?',
+    'UPDATE users SET name = ?, bio = ?, cashapp = ?, venmo = ?, paypal = ?, crypto = ?, paywall_enabled = ?, free_seconds = ? WHERE id = ?',
     name,
     bio,
     cashapp,
     venmo,
+    paypal,
+    crypto,
     paywall,
     freeMin * 60,
     req.user.id
   );
   flash(req, 'success', 'Saved.');
   res.redirect('/account');
+});
+
+// Upload / change the profile photo (ajax)
+router.post('/account/avatar', requireLogin, uploadSingle('image'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ ok: false, error: 'No image selected.' });
+  let url;
+  try {
+    url = await uploadImage(req.file.buffer, req.file.originalname);
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: 'Upload failed. Try again.' });
+  }
+  const old = req.user.avatar_url;
+  await db.run('UPDATE users SET avatar_url = ? WHERE id = ?', url, req.user.id);
+  if (old) deleteImage(old); // remove the previous photo
+  res.json({ ok: true, url });
 });
 
 module.exports = router;
