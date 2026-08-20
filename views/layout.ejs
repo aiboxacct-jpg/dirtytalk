@@ -13,6 +13,7 @@
     <% if (user) { %>
       <a href="/dm">Messages <span id="dm-badge" class="nav-badge"></span></a>
       <a href="/account">Account</a>
+      <% if (isAdmin) { %><a href="/admin">🛡 Admin</a><% } %>
       <form action="/logout" method="post" class="inline"><button class="linkbtn" type="submit">Log out</button></form>
     <% } else { %>
       <a href="/dm">My chats <span id="dm-badge" class="nav-badge"></span></a>

@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS users (
   venmo           TEXT,
   bio             TEXT,
   online_at       TEXT,
+  verified        INTEGER NOT NULL DEFAULT 0,   -- 1 = verified badge (admin-granted)
   paywall_enabled INTEGER NOT NULL DEFAULT 0,   -- 1 = ask for a tip to keep chatting
   free_seconds    INTEGER NOT NULL DEFAULT 120, -- free time per interval before the paywall
   created_at      TEXT NOT NULL DEFAULT (datetime('now'))
@@ -112,6 +113,7 @@ async function migrate() {
     'ALTER TABLE users ADD COLUMN free_seconds INTEGER NOT NULL DEFAULT 120',
     'ALTER TABLE threads ADD COLUMN free_until INTEGER',
     'ALTER TABLE threads ADD COLUMN paywall_on INTEGER',
+    'ALTER TABLE users ADD COLUMN verified INTEGER NOT NULL DEFAULT 0',
   ];
   for (const sql of stmts) {
     try {

@@ -79,6 +79,7 @@ app.use('/', require('./routes/room'));
 app.use('/', require('./routes/auth'));
 app.use('/u', require('./routes/creators'));
 app.use('/dm', require('./routes/dm'));
+app.use('/admin', require('./routes/admin'));
 
 // 404
 app.use((req, res) => res.status(404).render('error', { title: 'Not found', message: 'Page not found.' }));

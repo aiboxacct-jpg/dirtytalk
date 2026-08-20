@@ -90,6 +90,23 @@ textarea { resize: vertical; }
 .rmsg-del:hover { color: #a52020; }
 .admin-bar { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin: 6px 0 -2px; }
 .admin-tag { font-size: 0.72rem; font-weight: 800; color: var(--accent); background: #efeafc; padding: 2px 8px; border-radius: 999px; }
+
+/* Verified badge */
+.verified { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 999px; background: var(--brand); color: #fff; font-size: 0.62rem; font-weight: 900; line-height: 1; vertical-align: middle; }
+
+/* Admin dashboard */
+.add-user { display: flex; flex-wrap: wrap; gap: 8px; }
+.add-user input { flex: 1 1 160px; }
+.add-user .btn { flex: 0 0 auto; }
+.table-wrap { padding: 0; overflow-x: auto; }
+.admin-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.admin-table th, .admin-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; vertical-align: middle; }
+.admin-table th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+.admin-table tr:last-child td { border-bottom: none; }
+.mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.82rem; }
+.inline { display: inline; margin: 0; }
+.btn.danger { background: var(--danger); color: #fff; }
+.btn.danger:hover { background: #b83a3a; }
 .rmsg-body { background: #f4eff8; border-radius: 12px; padding: 8px 12px; display: inline-block; margin-top: 2px; word-break: break-word; }
 .rmsg.mine .rmsg-body { background: #fbe4ef; }
 

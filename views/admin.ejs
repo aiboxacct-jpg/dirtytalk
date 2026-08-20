@@ -1,0 +1,49 @@
+<h1>🛡 Admin</h1>
+<p class="page-sub">Manage users, verification, and accounts.</p>
+<% if (error) { %><div class="form-error"><%= error %></div><% } %>
+
+<div class="card">
+  <h2 style="margin-top:0;">Add a user</h2>
+  <form action="/admin/add" method="post" class="add-user">
+    <input type="text" name="name" placeholder="Display name" maxlength="30" required>
+    <input type="email" name="email" placeholder="Email" required>
+    <input type="password" name="password" placeholder="Password (6+ chars)" required>
+    <button class="btn" type="submit">Add user</button>
+  </form>
+</div>
+
+<div class="card table-wrap">
+  <table class="admin-table">
+    <thead>
+      <tr><th>Name</th><th>Email</th><th>Verified</th><th>Joined</th><th></th></tr>
+    </thead>
+    <tbody>
+      <% users.forEach(function(u){ %>
+        <tr>
+          <td>
+            <a href="/u/<%= u.id %>"><%= u.name %></a>
+            <% if (u.verified) { %><span class="verified" title="Verified">✔</span><% } %>
+            <% if (u.id === adminId) { %><span class="tag">you</span><% } %>
+          </td>
+          <td class="mono"><%= u.email %></td>
+          <td>
+            <form action="/admin/verify" method="post" class="inline">
+              <input type="hidden" name="user_id" value="<%= u.id %>">
+              <input type="hidden" name="on" value="<%= u.verified ? '0' : '1' %>">
+              <button class="btn small <%= u.verified ? 'muted' : '' %>" type="submit"><%= u.verified ? 'Unverify' : 'Verify' %></button>
+            </form>
+          </td>
+          <td class="muted"><%= (u.created_at || '').slice(0, 10) %></td>
+          <td>
+            <% if (u.id !== adminId) { %>
+              <form action="/admin/delete" method="post" class="inline" onsubmit="return confirm('Delete <%= u.name.replace(/'/g, "\\'") %> and all their private chats? This cannot be undone.');">
+                <input type="hidden" name="user_id" value="<%= u.id %>">
+                <button class="btn small danger" type="submit">Delete</button>
+              </form>
+            <% } %>
+          </td>
+        </tr>
+      <% }); %>
+    </tbody>
+  </table>
+</div>
