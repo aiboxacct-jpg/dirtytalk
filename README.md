@@ -6,7 +6,7 @@ A dead-simple chat: everyone meets in one **global room**, anyone can slip into 
 - **Creators** (the people who get tipped) sign up, set a display name, and link their
   Cash App / Venmo. They get a shareable profile at `/u/:id`.
 - **Tippers / visitors** don't need an account. They pick a name and chat. From any
-  creator's message they tap **💬 Chat & tip** to go private and see tip buttons.
+  creator's message they tap **💬 Private Chat & Tip** to go private and see tip buttons.
 - Money is **never handled by the app** — tip buttons open the creator's own Cash App /
   Venmo, so there's no payment processing or payouts to manage.
 
