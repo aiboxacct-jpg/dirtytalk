@@ -201,6 +201,8 @@ button.tip-btn { border: none; cursor: pointer; font-family: inherit; }
 .hostbar { display: flex; align-items: center; gap: 10px; justify-content: space-between; flex-wrap: wrap; background: #f6f2fb; border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; margin: 8px 0; font-size: 0.9rem; }
 .host-status { font-weight: 600; color: var(--ink); }
 .host-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.free-toggle { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 0.9rem; cursor: pointer; white-space: nowrap; }
+.free-toggle input { width: auto; margin: 0; }
 .btn.muted { background: #ece6f2; color: var(--ink); }
 .btn.muted:hover { background: #e0d8ea; }
 

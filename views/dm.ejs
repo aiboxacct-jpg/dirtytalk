@@ -34,12 +34,11 @@
   <% } %>
   <% if (isCreator) { %>
     <div id="hostbar" class="hostbar">
+      <label class="free-toggle" title="When checked, this chat is free. Uncheck to charge a tip to continue."><input type="checkbox" id="pw-free"> Free chat</label>
       <span id="hoststatus" class="host-status"></span>
       <span class="host-actions">
-        <button type="button" id="pw-start" class="btn small" hidden>▶ Start paid time</button>
         <button type="button" id="pw-lock" class="btn small muted" hidden>🔒 Lock now</button>
         <button type="button" id="pw-add" class="btn small" hidden>➕ Add <%= Math.round(paywall.freeSeconds / 60) %> min</button>
-        <button type="button" id="pw-stop" class="btn small muted" hidden>⏹ Stop</button>
       </span>
     </div>
   <% } %>
@@ -90,10 +89,9 @@
   var freetimeEl = document.getElementById('freetime');
   var paywallPanel = document.getElementById('paywall');
   var hoststatus = document.getElementById('hoststatus');
-  var pwStart = document.getElementById('pw-start');
+  var pwFree = document.getElementById('pw-free');
   var pwLock = document.getElementById('pw-lock');
   var pwAdd = document.getElementById('pw-add');
-  var pwStop = document.getElementById('pw-stop');
 
   function fmt(s) { s = Math.max(0, Math.round(s)); var m = Math.floor(s / 60), x = s % 60; return m + ':' + (x < 10 ? '0' : '') + x; }
   function composerEnabled(on) {
@@ -108,14 +106,13 @@
     var remaining = hasClock ? (paywall.freeUntil - (Date.now() + clockOffset)) / 1000 : null;
     var locked = hasClock && remaining <= 0;
     if (isCreator) {
+      if (pwFree) pwFree.checked = !on;
       if (hoststatus) {
-        hoststatus.textContent = !on ? 'Free chat — paid time is off'
+        hoststatus.textContent = !on ? ''
           : !hasClock ? 'Paid time on'
           : remaining > 0 ? '⏳ Guest’s free time: ' + fmt(remaining)
           : '⏸ Guest paused — waiting for a tip';
       }
-      show(pwStart, !on);
-      show(pwStop, on);
       show(pwLock, on && hasClock && !locked);
       show(pwAdd, on && locked);
       return;
@@ -141,10 +138,13 @@
       if (d.ok && d.paywall) { paywall = d.paywall; clockOffset = paywall.now ? paywall.now - Date.now() : clockOffset; renderPaywall(); }
     } catch (e) {}
   }
-  if (pwStart) pwStart.addEventListener('click', function () { hostAction('start'); });
+  // Checked = free (paywall off); unchecked = start paid time.
+  if (pwFree) pwFree.addEventListener('change', function () {
+    paywall.on = !pwFree.checked; // optimistic, so the 1s refresh doesn't fight the click
+    hostAction(pwFree.checked ? 'stop' : 'start');
+  });
   if (pwLock) pwLock.addEventListener('click', function () { hostAction('lock'); });
   if (pwAdd) pwAdd.addEventListener('click', function () { hostAction('add'); });
-  if (pwStop) pwStop.addEventListener('click', function () { hostAction('stop'); });
 
   box.addEventListener('scroll', function () {
     atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 40;
