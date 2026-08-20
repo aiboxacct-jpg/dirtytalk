@@ -27,6 +27,7 @@
     <% messages.forEach(function(m){ %>
       <div class="rmsg <%= m.mine ? 'mine' : '' %>" data-id="<%= m.id %>">
         <div class="rmsg-head">
+          <% if (m.avatar) { %><a class="rmsg-avatar" href="/u/<%= m.creatorHandle %>" style="background-image:url('<%= m.avatar %>')" title="<%= m.name %>"></a><% } %>
           <% if (m.creatorId && !m.mine) { %>
             <a class="rmsg-name creator" href="/u/<%= m.creatorHandle %>"><%= m.name %></a>
           <% } else { %>
@@ -91,6 +92,13 @@
     var wrap = el('div', 'rmsg' + (m.mine ? ' mine' : ''));
     wrap.setAttribute('data-id', m.id);
     var head = el('div', 'rmsg-head');
+    if (m.avatar) {
+      var av = el('a', 'rmsg-avatar');
+      av.href = '/u/' + m.creatorHandle;
+      av.style.backgroundImage = "url('" + m.avatar + "')";
+      av.title = m.name;
+      head.appendChild(av);
+    }
     if (m.creatorId && !m.mine) {
       var a = el('a', 'rmsg-name creator', m.name);
       a.href = '/u/' + m.creatorHandle;
