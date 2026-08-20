@@ -9,6 +9,8 @@
   </div>
   <% if (creator.bio) { %><p class="bio"><%= creator.bio %></p><% } %>
 
+  <%- include('partials/share', { shareUrl: absUrl('/u/' + (creator.handle || creator.id)), shareTitle: creator.name + ' — come chat with me on ' + siteName + ' 😘', label: 'Share:' }) %>
+
   <% if (isOwner) { %>
     <p class="muted">This is your profile. When people message you privately, you'll see them in your
       <a href="/dm">Messages</a>. Add your tip handles in <a href="/account">Account</a>.</p>

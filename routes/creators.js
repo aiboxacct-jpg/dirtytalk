@@ -7,10 +7,12 @@ const { findThread, threadMessages } = require('./dm');
 const router = express.Router();
 
 router.get('/:id', async (req, res) => {
-  const creator = await db.get(
-    'SELECT id, name, bio, cashapp, venmo, paypal, crypto, verified, avatar_url FROM users WHERE id = ?',
-    req.params.id
-  );
+  const param = req.params.id;
+  const cols = 'id, name, handle, bio, cashapp, venmo, paypal, crypto, verified, avatar_url';
+  let creator = await db.get(`SELECT ${cols} FROM users WHERE handle = ?`, param);
+  if (!creator && /^\d+$/.test(param)) {
+    creator = await db.get(`SELECT ${cols} FROM users WHERE id = ?`, param);
+  }
   if (!creator) {
     return res.status(404).render('error', { title: 'Not found', message: 'That person does not exist.' });
   }

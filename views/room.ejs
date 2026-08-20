@@ -14,7 +14,7 @@
   <div class="creators-strip">
     <span class="strip-label">Here now:</span>
     <% creators.forEach(function(c){ %>
-      <a class="creator-chip" href="/u/<%= c.id %>"><% if (c.avatar_url) { %><span class="chip-avatar" style="background-image:url('<%= c.avatar_url %>')"></span><% } %><%= c.name %><% if (c.verified) { %> <span class="verified" title="Verified">✔</span><% } %></a>
+      <a class="creator-chip" href="/u/<%= c.handle || c.id %>"><% if (c.avatar_url) { %><span class="chip-avatar" style="background-image:url('<%= c.avatar_url %>')"></span><% } %><%= c.name %><% if (c.verified) { %> <span class="verified" title="Verified">✔</span><% } %></a>
     <% }); %>
   </div>
 <% } %>
@@ -28,13 +28,13 @@
       <div class="rmsg <%= m.mine ? 'mine' : '' %>" data-id="<%= m.id %>">
         <div class="rmsg-head">
           <% if (m.creatorId && !m.mine) { %>
-            <a class="rmsg-name creator" href="/u/<%= m.creatorId %>"><%= m.name %></a>
+            <a class="rmsg-name creator" href="/u/<%= m.creatorHandle %>"><%= m.name %></a>
           <% } else { %>
             <span class="rmsg-name"><%= m.name %></span>
           <% } %>
           <% if (m.verified) { %><span class="verified" title="Verified">✔</span><% } %>
           <span class="rmsg-time"><%= (m.created_at || '').slice(11,16) %></span>
-          <% if (m.creatorId && !m.mine) { %><a class="rmsg-dm" href="/u/<%= m.creatorId %>#tip">💬 Click Here To Chat Privately</a><% } %>
+          <% if (m.creatorId && !m.mine) { %><a class="rmsg-dm" href="/u/<%= m.creatorHandle %>#tip">💬 Click Here To Chat Privately</a><% } %>
           <% if (isAdmin) { %><button type="button" class="rmsg-del" data-id="<%= m.id %>" title="Delete">✕</button><% } %>
         </div>
         <% if (m.image) { %>
@@ -93,7 +93,7 @@
     var head = el('div', 'rmsg-head');
     if (m.creatorId && !m.mine) {
       var a = el('a', 'rmsg-name creator', m.name);
-      a.href = '/u/' + m.creatorId;
+      a.href = '/u/' + m.creatorHandle;
       head.appendChild(a);
     } else {
       head.appendChild(el('span', 'rmsg-name', m.name));
@@ -102,7 +102,7 @@
     head.appendChild(el('span', 'rmsg-time', (m.created_at || '').slice(11, 16)));
     if (m.creatorId && !m.mine) {
       var dm = el('a', 'rmsg-dm', '💬 Click Here To Chat Privately');
-      dm.href = '/u/' + m.creatorId + '#tip';
+      dm.href = '/u/' + m.creatorHandle + '#tip';
       head.appendChild(dm);
     }
     if (isAdmin) {

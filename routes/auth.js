@@ -4,6 +4,9 @@ const bcrypt = require('bcryptjs');
 const db = require('../db');
 const { requireLogin } = require('../middleware');
 const { uploadSingle, uploadImage, deleteImage } = require('../storage');
+const { uniqueHandle } = require('../slug');
+
+const getFn = (sql, ...a) => db.get(sql, ...a);
 
 const router = express.Router();
 
@@ -35,7 +38,10 @@ router.post('/signup', async (req, res) => {
     hash,
     name
   );
-  req.session.userId = Number(info.lastInsertRowid);
+  const newId = Number(info.lastInsertRowid);
+  const handle = await uniqueHandle(getFn, name, newId);
+  await db.run('UPDATE users SET handle = ? WHERE id = ?', handle, newId);
+  req.session.userId = newId;
   flash(req, 'success', 'Welcome! Add your Cash App / Venmo so people can tip you.');
   res.redirect('/account');
 });
@@ -94,6 +100,9 @@ router.post('/account', requireLogin, async (req, res) => {
     freeMin * 60,
     req.user.id
   );
+  // Keep the profile URL handle in sync with the display name.
+  const handle = await uniqueHandle(getFn, name, req.user.id);
+  await db.run('UPDATE users SET handle = ? WHERE id = ?', handle, req.user.id);
   flash(req, 'success', 'Saved.');
   res.redirect('/account');
 });

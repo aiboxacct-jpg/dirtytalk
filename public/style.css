@@ -166,6 +166,15 @@ button.tip-btn { border: none; cursor: pointer; font-family: inherit; }
 .profile-head h1 { margin: 0; }
 .chip-avatar { display: inline-block; width: 18px; height: 18px; border-radius: 50%; background-size: cover; background-position: center; vertical-align: middle; margin-right: 5px; background-color: #f0ebf5; }
 
+/* Share buttons */
+.share { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 0; }
+.share-label { color: var(--muted); font-size: 0.85rem; font-weight: 600; }
+.share-btn { padding: 6px 13px; border-radius: 999px; font-size: 0.82rem; font-weight: 700; color: #fff; }
+.share-btn:hover { opacity: 0.92; text-decoration: none; }
+.share-btn.reddit { background: #ff4500; }
+.share-btn.x { background: #000; }
+.share-btn.bsky { background: #1185fe; }
+
 .dm-starter { margin-top: 16px; }
 .dm-title { margin-bottom: 0; }
 

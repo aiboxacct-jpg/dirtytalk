@@ -1,0 +1,14 @@
+<%
+  var _u = shareUrl;
+  var _t = (typeof shareTitle !== 'undefined' && shareTitle) ? shareTitle : '';
+  var enc = encodeURIComponent;
+%>
+<div class="share">
+  <span class="share-label"><%= (typeof label !== 'undefined' && label) ? label : 'Share:' %></span>
+  <a class="share-btn reddit" target="_blank" rel="noopener noreferrer"
+     href="https://www.reddit.com/submit?url=<%= enc(_u) %>&title=<%= enc(_t) %>">Reddit</a>
+  <a class="share-btn x" target="_blank" rel="noopener noreferrer"
+     href="https://twitter.com/intent/tweet?url=<%= enc(_u) %>&text=<%= enc(_t) %>">X</a>
+  <a class="share-btn bsky" target="_blank" rel="noopener noreferrer"
+     href="https://bsky.app/intent/compose?text=<%= enc(_t + ' ' + _u) %>">Bluesky</a>
+</div>

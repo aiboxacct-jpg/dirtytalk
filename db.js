@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS users (
   email           TEXT UNIQUE NOT NULL,
   password_hash   TEXT NOT NULL,
   name            TEXT NOT NULL,
+  handle          TEXT,                         -- URL-safe slug of the display name
   cashapp         TEXT,
   venmo           TEXT,
   paypal          TEXT,
@@ -120,6 +121,8 @@ async function migrate() {
     'ALTER TABLE users ADD COLUMN paypal TEXT',
     'ALTER TABLE users ADD COLUMN crypto TEXT',
     'ALTER TABLE users ADD COLUMN avatar_url TEXT',
+    'ALTER TABLE users ADD COLUMN handle TEXT',
+    'CREATE UNIQUE INDEX IF NOT EXISTS idx_users_handle ON users(handle)',
   ];
   for (const sql of stmts) {
     try {
@@ -130,10 +133,21 @@ async function migrate() {
   }
 }
 
+// Give every user without a handle a unique slug from their display name.
+async function backfillHandles() {
+  const { uniqueHandle } = require('./slug');
+  const rows = await backend.all("SELECT id, name FROM users WHERE handle IS NULL OR handle = ''");
+  for (const u of rows) {
+    const h = await uniqueHandle((sql, ...a) => backend.get(sql, ...a), u.name, u.id);
+    await backend.run('UPDATE users SET handle = ? WHERE id = ?', h, u.id);
+  }
+}
+
 async function init() {
   backend = usingTurso ? await tursoBackend() : nodeSqliteBackend();
   await backend.exec(SCHEMA);
   await migrate();
+  await backfillHandles();
   console.log('Database ready (' + (usingTurso ? 'Turso/libSQL' : 'local node:sqlite') + ').');
 }
 
