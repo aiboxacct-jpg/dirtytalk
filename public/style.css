@@ -129,7 +129,14 @@ textarea { resize: vertical; }
 
 /* Pictures shared in chat */
 .chat-img-link { display: inline-block; margin-top: 3px; }
-.chat-img { max-width: 220px; max-height: 260px; width: auto; height: auto; border-radius: 12px; border: 1px solid var(--line); display: block; }
+.chat-img { max-width: 220px; max-height: 260px; width: auto; height: auto; border-radius: 12px; border: 1px solid var(--line); display: block; cursor: zoom-in; }
+
+/* Lightbox (click a chat picture to enlarge) */
+.lightbox { position: fixed; inset: 0; z-index: 300; background: rgba(0, 0, 0, 0.85); display: flex; align-items: center; justify-content: center; padding: 20px; cursor: zoom-out; }
+.lightbox[hidden] { display: none; }
+.lb-img { max-width: 100%; max-height: 90vh; border-radius: 8px; box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5); cursor: default; }
+.lb-close { position: fixed; top: 14px; right: 16px; width: 44px; height: 44px; border: none; border-radius: 50%; background: rgba(255, 255, 255, 0.16); color: #fff; font-size: 1.3rem; line-height: 1; cursor: pointer; }
+.lb-close:hover { background: rgba(255, 255, 255, 0.3); }
 .emoji-panel { position: fixed; z-index: 60; width: 296px; max-width: calc(100vw - 16px); max-height: 260px; overflow-y: auto; background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 10px 34px rgba(60,30,50,0.20); padding: 6px 10px 10px; display: none; }
 .emoji-group-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); font-weight: 700; margin: 8px 2px 3px; }
 .emoji-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 1px; }

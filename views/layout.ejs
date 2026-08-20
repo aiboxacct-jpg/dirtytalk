@@ -34,6 +34,11 @@
 
 <div id="toasts" class="toasts"></div>
 
+<div id="lightbox" class="lightbox" hidden>
+  <button type="button" class="lb-close" aria-label="Close">✕</button>
+  <img class="lb-img" alt="">
+</div>
+
 <script src="/public/emoji.js" defer></script>
 <script src="/public/notify.js" defer></script>
 <script>
@@ -46,4 +51,19 @@ document.addEventListener('click', function (e) {
   var h = b.querySelector('.tip-handle');
   if (h) { var prev = h.textContent; h.textContent = 'Copied!'; setTimeout(function () { h.textContent = prev; }, 1200); }
 });
+
+// Lightbox: click a chat picture to enlarge it; X / outside / Esc closes.
+(function () {
+  var lb = document.getElementById('lightbox');
+  if (!lb) return;
+  var lbImg = lb.querySelector('.lb-img');
+  function openLb(src) { lbImg.src = src; lb.hidden = false; document.body.style.overflow = 'hidden'; }
+  function closeLb() { lb.hidden = true; lbImg.removeAttribute('src'); document.body.style.overflow = ''; }
+  document.addEventListener('click', function (e) {
+    var link = e.target.closest('.chat-img-link');
+    if (link) { e.preventDefault(); openLb(link.getAttribute('href')); return; }
+    if (e.target.closest('.lb-close') || e.target === lb) closeLb();
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !lb.hidden) closeLb(); });
+})();
 </script>
