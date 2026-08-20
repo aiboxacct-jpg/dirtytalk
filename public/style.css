@@ -176,6 +176,15 @@ button.tip-btn { border: none; cursor: pointer; font-family: inherit; }
 .share-btn.x { background: #000; }
 .share-btn.bsky { background: #1185fe; }
 
+/* Gender symbol + picker */
+.gender { font-weight: 800; }
+.gender.male { color: #3d95ce; }
+.gender.female { color: #d6417f; }
+.gender-pick { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 10px; }
+.gpick { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; font-size: 0.9rem; padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; cursor: pointer; }
+.gpick input { width: auto; margin: 0; }
+.gpick .gender { font-size: 1.05rem; }
+
 .dm-starter { margin-top: 16px; }
 .dm-title { margin-bottom: 0; }
 

@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash   TEXT NOT NULL,
   name            TEXT NOT NULL,
   handle          TEXT,                         -- URL-safe slug of the display name
+  gender          TEXT,                         -- 'male' | 'female' | '' (not set)
   cashapp         TEXT,
   venmo           TEXT,
   paypal          TEXT,
@@ -123,6 +124,7 @@ async function migrate() {
     'ALTER TABLE users ADD COLUMN avatar_url TEXT',
     'ALTER TABLE users ADD COLUMN handle TEXT',
     'CREATE UNIQUE INDEX IF NOT EXISTS idx_users_handle ON users(handle)',
+    'ALTER TABLE users ADD COLUMN gender TEXT',
   ];
   for (const sql of stmts) {
     try {

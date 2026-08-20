@@ -6,6 +6,13 @@
     <label for="name">Display name</label>
     <input type="text" id="name" name="name" maxlength="30" placeholder="What people will see" required>
 
+    <label>Gender</label>
+    <div class="gender-pick">
+      <label class="gpick"><input type="radio" name="gender" value="female"> <span class="gender female">♀</span> Female</label>
+      <label class="gpick"><input type="radio" name="gender" value="male"> <span class="gender male">♂</span> Male</label>
+      <label class="gpick"><input type="radio" name="gender" value="" checked> Skip</label>
+    </div>
+
     <label for="email">Email</label>
     <input type="email" id="email" name="email" placeholder="you@email.com" required>
 

@@ -24,6 +24,13 @@
     <label for="bio">Bio (shown on your profile)</label>
     <textarea id="bio" name="bio" maxlength="500"><%= user.bio || '' %></textarea>
 
+    <label>Gender</label>
+    <div class="gender-pick">
+      <label class="gpick"><input type="radio" name="gender" value="female" <%= user.gender === 'female' ? 'checked' : '' %>> <span class="gender female">♀</span> Female</label>
+      <label class="gpick"><input type="radio" name="gender" value="male" <%= user.gender === 'male' ? 'checked' : '' %>> <span class="gender male">♂</span> Male</label>
+      <label class="gpick"><input type="radio" name="gender" value="" <%= !user.gender ? 'checked' : '' %>> Skip</label>
+    </div>
+
     <h2>Tip handles</h2>
     <p class="hint">People see these as tap-to-pay buttons on your profile and in private chats. Fill in the ones you use.</p>
 

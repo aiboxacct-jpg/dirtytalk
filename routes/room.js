@@ -27,6 +27,7 @@ function serialize(rows, req) {
     creatorId: m.user_id || null, // set => a signed-up creator you can DM + tip
     creatorHandle: m.creator_handle || m.user_id, // pretty URL slug
     avatar: m.creator_avatar || null,
+    gender: m.creator_gender || null,
     verified: !!m.creator_verified,
     mine:
       (!!req.user && m.user_id === req.user.id) ||
@@ -40,14 +41,14 @@ function wantsJson(req) {
 // Room page
 router.get('/', async (req, res) => {
   const rows = await db.all(
-    `SELECT gm.*, u.verified AS creator_verified, u.handle AS creator_handle, u.avatar_url AS creator_avatar
+    `SELECT gm.*, u.verified AS creator_verified, u.handle AS creator_handle, u.avatar_url AS creator_avatar, u.gender AS creator_gender
        FROM room_messages gm LEFT JOIN users u ON u.id = gm.user_id
       ORDER BY gm.id DESC LIMIT 100`
   );
   rows.reverse();
   // A few creators to show as "here now" — most recently active.
   const creators = await db.all(
-    'SELECT id, name, handle, verified, avatar_url FROM users ORDER BY COALESCE(online_at, created_at) DESC LIMIT 12'
+    'SELECT id, name, handle, verified, avatar_url, gender FROM users ORDER BY COALESCE(online_at, created_at) DESC LIMIT 12'
   );
   res.render('room', {
     title: 'Room',
@@ -62,7 +63,7 @@ router.get('/', async (req, res) => {
 router.get('/feed', async (req, res) => {
   const after = Number(req.query.after) || 0;
   const rows = await db.all(
-    `SELECT gm.*, u.verified AS creator_verified, u.handle AS creator_handle, u.avatar_url AS creator_avatar
+    `SELECT gm.*, u.verified AS creator_verified, u.handle AS creator_handle, u.avatar_url AS creator_avatar, u.gender AS creator_gender
        FROM room_messages gm LEFT JOIN users u ON u.id = gm.user_id
       WHERE gm.id > ? ORDER BY gm.id LIMIT 200`,
     after
@@ -93,7 +94,7 @@ router.post('/room', async (req, res) => {
     body
   );
   if (json) {
-    const m = await db.get('SELECT gm.*, u.verified AS creator_verified, u.handle AS creator_handle, u.avatar_url AS creator_avatar FROM room_messages gm LEFT JOIN users u ON u.id = gm.user_id WHERE gm.id = ?', Number(info.lastInsertRowid));
+    const m = await db.get('SELECT gm.*, u.verified AS creator_verified, u.handle AS creator_handle, u.avatar_url AS creator_avatar, u.gender AS creator_gender FROM room_messages gm LEFT JOIN users u ON u.id = gm.user_id WHERE gm.id = ?', Number(info.lastInsertRowid));
     return res.json({ ok: true, message: serialize([m], req)[0] });
   }
   res.redirect('/');
@@ -124,7 +125,7 @@ router.post('/room/upload', uploadSingle('image'), async (req, res) => {
     '',
     url
   );
-  const m = await db.get('SELECT gm.*, u.verified AS creator_verified, u.handle AS creator_handle, u.avatar_url AS creator_avatar FROM room_messages gm LEFT JOIN users u ON u.id = gm.user_id WHERE gm.id = ?', Number(info.lastInsertRowid));
+  const m = await db.get('SELECT gm.*, u.verified AS creator_verified, u.handle AS creator_handle, u.avatar_url AS creator_avatar, u.gender AS creator_gender FROM room_messages gm LEFT JOIN users u ON u.id = gm.user_id WHERE gm.id = ?', Number(info.lastInsertRowid));
   res.json({ ok: true, message: serialize([m], req)[0] });
 });
 

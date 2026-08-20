@@ -31,12 +31,14 @@ router.post('/signup', async (req, res) => {
   const existing = await db.get('SELECT id FROM users WHERE email = ?', email);
   if (existing) return rerender('That email is already registered — try logging in.');
 
+  const gender = ['male', 'female'].includes(req.body.gender) ? req.body.gender : '';
   const hash = bcrypt.hashSync(password, 10);
   const info = await db.run(
-    'INSERT INTO users (email, password_hash, name) VALUES (?, ?, ?)',
+    'INSERT INTO users (email, password_hash, name, gender) VALUES (?, ?, ?, ?)',
     email,
     hash,
-    name
+    name,
+    gender
   );
   const newId = Number(info.lastInsertRowid);
   const handle = await uniqueHandle(getFn, name, newId);
@@ -81,6 +83,7 @@ router.post('/account', requireLogin, async (req, res) => {
   const venmo = String(req.body.venmo || '').trim().slice(0, 60);
   const paypal = String(req.body.paypal || '').trim().slice(0, 120);
   const crypto = String(req.body.crypto || '').trim().slice(0, 120);
+  const gender = ['male', 'female'].includes(req.body.gender) ? req.body.gender : '';
   if (!name) {
     return res.render('account', { title: 'My account', error: 'Please keep a display name.' });
   }
@@ -89,9 +92,10 @@ router.post('/account', requireLogin, async (req, res) => {
   if (!Number.isFinite(freeMin)) freeMin = 2;
   freeMin = Math.max(1, Math.min(120, freeMin));
   await db.run(
-    'UPDATE users SET name = ?, bio = ?, cashapp = ?, venmo = ?, paypal = ?, crypto = ?, paywall_enabled = ?, free_seconds = ? WHERE id = ?',
+    'UPDATE users SET name = ?, bio = ?, gender = ?, cashapp = ?, venmo = ?, paypal = ?, crypto = ?, paywall_enabled = ?, free_seconds = ? WHERE id = ?',
     name,
     bio,
+    gender,
     cashapp,
     venmo,
     paypal,
