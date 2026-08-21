@@ -47,6 +47,8 @@
     <% }); %>
   </div>
 
+  <div id="room-typing" class="typing-ind" hidden></div>
+
   <form id="room-form" class="room-form" action="/room" method="post">
     <% if (isGuest) { %>
       <input type="text" id="room-name" name="name" maxlength="30" value="<%= suggestedName %>" placeholder="Your name">
@@ -70,7 +72,42 @@
   var form = document.getElementById('room-form');
   var input = document.getElementById('room-body');
   var nameInput = document.getElementById('room-name');
+  var typingEl = document.getElementById('room-typing');
   var empty = document.getElementById('room-empty');
+
+  // Tell the room we're typing (throttled to once every ~2.5s).
+  var lastTypingPing = 0;
+  input.addEventListener('input', function () {
+    var now = Date.now();
+    if (now - lastTypingPing < 2500) return;
+    lastTypingPing = now;
+    var p = new URLSearchParams();
+    if (nameInput) p.set('name', nameInput.value);
+    fetch('/typing', {
+      method: 'POST',
+      headers: { accept: 'application/json', 'content-type': 'application/x-www-form-urlencoded' },
+      body: p,
+    }).catch(function () {});
+  });
+
+  function renderTyping(names) {
+    if (!typingEl) return;
+    names = names || [];
+    if (!names.length) { typingEl.hidden = true; typingEl.textContent = ''; return; }
+    var text = names.length === 1 ? names[0] + ' is typing'
+      : names.length === 2 ? names[0] + ' and ' + names[1] + ' are typing'
+      : 'Several people are typing';
+    typingEl.textContent = ''; // textContent for names => XSS-safe
+    typingEl.appendChild(document.createTextNode(text));
+    var dots = el('span', 'typing-dots');
+    dots.appendChild(el('span', null, '.'));
+    dots.appendChild(el('span', null, '.'));
+    dots.appendChild(el('span', null, '.'));
+    typingEl.appendChild(dots);
+    var wasHidden = typingEl.hidden;
+    typingEl.hidden = false;
+    if (wasHidden) scrollIfNeeded();
+  }
   var isAdmin = <%= isAdmin ? 'true' : 'false' %>;
   var lastId = <%= messages.length ? messages[messages.length - 1].id : 0 %>;
   var atBottom = true;
@@ -142,6 +179,7 @@
       var r = await fetch('/feed?after=' + lastId, { headers: { accept: 'application/json' } });
       var data = await r.json();
       if (data.messages && data.messages.length) { data.messages.forEach(addMessage); scrollIfNeeded(); }
+      renderTyping(data.typing);
     } catch (e) {}
   }
   setInterval(poll, 4000);

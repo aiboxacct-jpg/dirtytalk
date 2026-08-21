@@ -9,6 +9,32 @@ const BODY_MAX = 500;
 const NAME_MAX = 30;
 const COOLDOWN_MS = 1200;
 
+// Ephemeral "who's typing" — key -> { name, until }. In memory, no DB writes.
+const TYPING_WINDOW = 6000;
+const roomTyping = new Map();
+function keyFor(req) {
+  return req.user ? 'u' + req.user.id : 'g' + (req.gid || 'anon');
+}
+function setTyping(req, name) {
+  roomTyping.set(keyFor(req), { name, until: Date.now() + TYPING_WINDOW });
+}
+function clearTyping(req) {
+  roomTyping.delete(keyFor(req));
+}
+// Names currently typing, minus the person asking (you never see yourself).
+function typingNames(exceptKey) {
+  const now = Date.now();
+  const seen = new Set();
+  const names = [];
+  for (const [k, v] of roomTyping) {
+    if (v.until <= now) { roomTyping.delete(k); continue; } // expired — sweep it
+    if (k === exceptKey || seen.has(v.name)) continue;
+    seen.add(v.name);
+    names.push(v.name);
+  }
+  return names;
+}
+
 function nickFor(req) {
   return 'guest-' + String(req.gid || 'anon').slice(0, 4);
 }
@@ -72,7 +98,13 @@ router.get('/feed', async (req, res) => {
       WHERE gm.id > ? ORDER BY gm.id LIMIT 200`,
     after
   );
-  res.json({ messages: serialize(rows, req) });
+  res.json({ messages: serialize(rows, req), typing: typingNames(keyFor(req)) });
+});
+
+// Lightweight "I'm typing" ping (in memory, no DB write).
+router.post('/typing', (req, res) => {
+  setTyping(req, displayName(req, req.body.name));
+  res.json({ ok: true });
 });
 
 // Post a message
@@ -89,6 +121,7 @@ router.post('/room', async (req, res) => {
     return json ? res.json({ ok: false, error: 'Slow down a moment.' }) : res.redirect('/');
   }
   lastPost.set(key, now);
+  clearTyping(req); // they just sent — no longer typing
 
   const info = await db.run(
     'INSERT INTO room_messages (user_id, gid, name, body) VALUES (?, ?, ?, ?)',
@@ -114,6 +147,7 @@ router.post('/room/upload', uploadSingle('image'), async (req, res) => {
     return res.status(429).json({ ok: false, error: 'Slow down a moment.' });
   }
   lastPost.set(key, now);
+  clearTyping(req); // they just sent — no longer typing
   let url;
   try {
     url = await uploadImage(req.file.buffer, req.file.originalname);
