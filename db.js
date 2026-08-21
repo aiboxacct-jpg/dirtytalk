@@ -127,6 +127,10 @@ async function migrate() {
     'ALTER TABLE users ADD COLUMN gender TEXT',
     'ALTER TABLE users ADD COLUMN is_buyer INTEGER NOT NULL DEFAULT 0',
     'ALTER TABLE users ADD COLUMN revolut TEXT',
+    // Running site-fee tab: $1 per confirmed payment the creator logs. They owe
+    // this to the platform and settle up off-site. bill_cents in whole cents.
+    'ALTER TABLE users ADD COLUMN bill_cents INTEGER NOT NULL DEFAULT 0',
+    'ALTER TABLE users ADD COLUMN sales_count INTEGER NOT NULL DEFAULT 0',
   ];
   for (const sql of stmts) {
     try {

@@ -3,6 +3,18 @@
   <p class="sub"><%= user.email %></p>
   <% if (error) { %><div class="form-error"><%= error %></div><% } %>
 
+  <div class="stat-cards">
+    <div class="stat-card">
+      <div class="stat-num">$1.00</div>
+      <div class="stat-label">Site fee per sale</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num"><%= '$' + ((user.bill_cents || 0) / 100).toFixed(2) %></div>
+      <div class="stat-label">Your current bill<% if (user.sales_count) { %> · <%= user.sales_count %> sale<%= user.sales_count === 1 ? '' : 's' %><% } %></div>
+    </div>
+  </div>
+  <p class="hint">We charge <strong>$1 per sale</strong>. Each time you tap “💵 Payment received” in a chat, $1 is added here. It’s a running tab you owe — settle up with us anytime.</p>
+
   <% var _slug = user.handle || user.id; %>
   <p class="hint">Your public profile & tip link:
     <a href="/u/<%= _slug %>" target="_blank" rel="noopener">/u/<%= _slug %></a></p>

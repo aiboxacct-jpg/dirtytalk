@@ -21,7 +21,7 @@ function flash(req, type, msg) {
 }
 
 function listUsers() {
-  return db.all('SELECT id, email, name, verified, created_at FROM users ORDER BY created_at DESC');
+  return db.all('SELECT id, email, name, verified, bill_cents, sales_count, created_at FROM users ORDER BY created_at DESC');
 }
 
 // Dashboard

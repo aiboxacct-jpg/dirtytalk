@@ -42,6 +42,10 @@
       </span>
       <span id="hoststatus" class="host-status"></span>
     </div>
+    <div class="payrow">
+      <button type="button" id="pay-received" class="btn small pay-btn" title="Tap when a tip lands — adds the $1 site fee to your bill">💵 Payment received</button>
+      <span id="pay-note" class="pay-note" hidden></span>
+    </div>
   <% } %>
 
   <div id="typing-ind" class="typing-ind" hidden><%= otherName %> is typing<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span></div>
@@ -166,6 +170,22 @@
     var m = parseInt(pwAddMin && pwAddMin.value, 10);
     if (!Number.isFinite(m) || m < 1) m = 2;
     hostAction('add', m);
+  });
+
+  // Creator logs a received tip → +$1 site fee on their bill.
+  var payBtn = document.getElementById('pay-received');
+  var payNote = document.getElementById('pay-note');
+  if (payBtn) payBtn.addEventListener('click', async function () {
+    payBtn.disabled = true;
+    try {
+      var r = await fetch(base + '/payment' + tokenQ, { method: 'POST', headers: { accept: 'application/json' } });
+      var d = await r.json();
+      if (d.ok && payNote) {
+        payNote.textContent = '✓ Logged — your bill is now ' + d.bill;
+        payNote.hidden = false;
+      }
+    } catch (e) {}
+    payBtn.disabled = false;
   });
 
   box.addEventListener('scroll', function () {

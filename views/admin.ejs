@@ -15,7 +15,7 @@
 <div class="card table-wrap">
   <table class="admin-table">
     <thead>
-      <tr><th>Name</th><th>Email</th><th>Verified</th><th>Joined</th><th></th></tr>
+      <tr><th>Name</th><th>Email</th><th>Verified</th><th>Bill</th><th>Joined</th><th></th></tr>
     </thead>
     <tbody>
       <% users.forEach(function(u){ %>
@@ -32,6 +32,9 @@
               <input type="hidden" name="on" value="<%= u.verified ? '0' : '1' %>">
               <button class="btn small <%= u.verified ? 'muted' : '' %>" type="submit"><%= u.verified ? 'Unverify' : 'Verify' %></button>
             </form>
+          </td>
+          <td<% if (u.bill_cents) { %> class="bill-owed"<% } else { %> class="muted"<% } %>>
+            <%= '$' + ((u.bill_cents || 0) / 100).toFixed(2) %><% if (u.sales_count) { %> <span class="muted">(<%= u.sales_count %>)</span><% } %>
           </td>
           <td class="muted"><%= (u.created_at || '').slice(0, 10) %></td>
           <td class="row-actions">

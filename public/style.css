@@ -167,6 +167,16 @@ textarea { resize: vertical; }
 .tip-btn .tip-handle { font-weight: 500; opacity: 0.92; font-size: 0.82rem; }
 .tip-btn.cashapp { background: #00c244; }
 .tip-btn.venmo { background: #3d95ce; }
+/* Billing cards + "payment received" control */
+.stat-cards { display: flex; flex-wrap: wrap; gap: 12px; margin: 14px 0 6px; }
+.stat-card { flex: 1 1 140px; background: var(--soft, #faf7fd); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+.stat-num { font-size: 1.5rem; font-weight: 800; color: var(--brand); line-height: 1.1; }
+.stat-label { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
+.payrow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+.pay-btn { background: #1e8e3e; }
+.pay-btn:hover { background: #1a7d36; }
+.pay-note { font-size: 0.82rem; color: #1e8e3e; font-weight: 700; }
+.bill-owed { font-weight: 800; color: var(--brand); }
 .tip-btn.paypal { background: #003087; }
 .tip-btn.revolut { background: #191c1f; }
 .tip-btn.crypto { background: #f7931a; }
