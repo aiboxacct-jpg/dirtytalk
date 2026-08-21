@@ -86,7 +86,7 @@ textarea { resize: vertical; }
 .rmsg.mine .rmsg-head { flex-direction: row-reverse; }
 .rmsg-name { font-weight: 700; color: var(--ink); }
 .rmsg-name.creator { color: var(--brand-dark); }
-.rmsg-dm { display: inline-block; margin-top: 5px; font-size: 0.78rem; font-weight: 700; color: #fff; background: var(--brand); padding: 6px 13px; border-radius: 999px; white-space: nowrap; }
+.rmsg-dm { display: inline-block; margin-top: 5px; font-size: 0.68rem; font-weight: 700; color: #fff; background: var(--brand); padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
 .rmsg-dm:hover { background: var(--brand-dark); text-decoration: none; }
 .rmsg-del { border: none; background: none; color: var(--danger); cursor: pointer; font-size: 0.72rem; padding: 0 2px; line-height: 1; }
 .rmsg-del:hover { color: #a52020; }
