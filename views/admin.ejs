@@ -3,6 +3,25 @@
 <% if (error) { %><div class="form-error"><%= error %></div><% } %>
 <% var today = new Date().toISOString().slice(0, 10); %>
 
+<div class="dash-grid">
+  <div class="dash-card accent">
+    <div class="dash-num"><%= '$' + ((stats.totalOwedCents || 0) / 100).toFixed(2) %></div>
+    <div class="dash-label">Total owed to you</div>
+  </div>
+  <div class="dash-card">
+    <div class="dash-num"><%= stats.totalSales %></div>
+    <div class="dash-label">Sales logged</div>
+  </div>
+  <div class="dash-card">
+    <div class="dash-num"><%= stats.creators %></div>
+    <div class="dash-label">Creators<% if (stats.buyers) { %> · <%= stats.buyers %> buyers<% } %></div>
+  </div>
+  <div class="dash-card<% if (stats.lockedNow) { %> danger<% } %>">
+    <div class="dash-num"><%= stats.lockedNow %></div>
+    <div class="dash-label">Locked now<% if (stats.dueScheduled) { %> · <%= stats.dueScheduled %> due soon<% } %></div>
+  </div>
+</div>
+
 <div class="card">
   <h2 style="margin-top:0;">Add a user</h2>
   <form action="/admin/add" method="post" class="add-user">

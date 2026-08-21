@@ -21,12 +21,38 @@ function flash(req, type, msg) {
 }
 
 function listUsers() {
-  return db.all('SELECT id, email, name, verified, bill_cents, sales_count, due_date, created_at FROM users ORDER BY created_at DESC');
+  return db.all('SELECT id, email, name, verified, is_buyer, bill_cents, sales_count, due_date, created_at FROM users ORDER BY created_at DESC');
+}
+
+// Aggregate the whole site's billing picture for the dashboard cards.
+function summarize(users) {
+  const today = new Date().toISOString().slice(0, 10);
+  const creators = users.filter((u) => !u.is_buyer);
+  return {
+    creators: creators.length,
+    buyers: users.length - creators.length,
+    totalSales: users.reduce((s, u) => s + (u.sales_count || 0), 0),
+    totalOwedCents: users.reduce((s, u) => s + (u.bill_cents || 0), 0),
+    lockedNow: users.filter((u) => u.due_date && today >= u.due_date).length,
+    dueScheduled: users.filter((u) => u.due_date && today < u.due_date).length,
+  };
+}
+
+async function renderDashboard(req, res, error) {
+  const users = await listUsers();
+  res.render('admin', {
+    title: 'Admin',
+    users,
+    stats: summarize(users),
+    adminId: req.user.id,
+    error: error || null,
+    wide: true,
+  });
 }
 
 // Dashboard
 router.get('/', async (req, res) => {
-  res.render('admin', { title: 'Admin', users: await listUsers(), adminId: req.user.id, error: null, wide: true });
+  await renderDashboard(req, res, null);
 });
 
 // Grant / remove the verified badge
@@ -43,8 +69,7 @@ router.post('/add', async (req, res) => {
   const email = String(req.body.email || '').trim().toLowerCase();
   const name = String(req.body.name || '').trim().slice(0, 30);
   const password = String(req.body.password || '');
-  const rerender = async (error) =>
-    res.render('admin', { title: 'Admin', users: await listUsers(), adminId: req.user.id, error, wide: true });
+  const rerender = (error) => renderDashboard(req, res, error);
 
   if (!email || !name || !password) return rerender('Fill in name, email and password.');
   if (password.length < 6) return rerender('Password must be at least 6 characters.');

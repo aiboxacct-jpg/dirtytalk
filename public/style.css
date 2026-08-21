@@ -194,6 +194,15 @@ textarea { resize: vertical; }
 .due-form { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .due-input { padding: 5px 7px; border: 1px solid var(--line); border-radius: 8px; font: inherit; }
 .locked-tag { background: var(--danger); color: #fff; }
+/* Admin summary dashboard */
+.dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 6px 0 20px; }
+.dash-card { background: var(--soft, #faf7fd); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; }
+.dash-card.accent { background: linear-gradient(135deg, var(--brand), var(--brand-dark, #a41d5f)); border-color: transparent; }
+.dash-card.accent .dash-num, .dash-card.accent .dash-label { color: #fff; }
+.dash-card.danger { border-color: var(--danger); }
+.dash-card.danger .dash-num { color: var(--danger); }
+.dash-num { font-size: 1.7rem; font-weight: 800; color: var(--ink); line-height: 1.05; }
+.dash-label { font-size: 0.78rem; color: var(--muted); margin-top: 5px; }
 .tip-btn.paypal { background: #003087; }
 .tip-btn.revolut { background: #191c1f; }
 .tip-btn.crypto { background: #f7931a; }
