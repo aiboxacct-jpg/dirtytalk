@@ -3,14 +3,18 @@
   <p class="sub">Create a creator account so people can chat with you privately and send tips. (Tippers don't need an account.)</p>
   <% if (error) { %><div class="form-error"><%= error %></div><% } %>
   <form action="/signup" method="post">
+    <label class="buyer-check"><input type="checkbox" id="is_buyer" name="is_buyer" value="1"> I'm just here to chat &amp; tip (not a creator)</label>
+
     <label for="name">Display name</label>
     <input type="text" id="name" name="name" maxlength="30" placeholder="What people will see" required>
 
-    <label>Gender</label>
-    <div class="gender-pick">
-      <label class="gpick"><input type="radio" name="gender" value="female"> <span class="gender female">♀</span> Female</label>
-      <label class="gpick"><input type="radio" name="gender" value="male"> <span class="gender male">♂</span> Male</label>
-      <label class="gpick"><input type="radio" name="gender" value="" checked> Skip</label>
+    <div id="gender-field">
+      <label>Gender</label>
+      <div class="gender-pick">
+        <label class="gpick"><input type="radio" name="gender" value="female"> <span class="gender female">♀</span> Female</label>
+        <label class="gpick"><input type="radio" name="gender" value="male"> <span class="gender male">♂</span> Male</label>
+        <label class="gpick"><input type="radio" name="gender" value="" checked> Skip</label>
+      </div>
     </div>
 
     <label for="email">Email</label>
@@ -23,3 +27,14 @@
   </form>
   <p class="hint">Already have one? <a href="/login">Log in</a>.</p>
 </div>
+
+<script>
+(function () {
+  var buyer = document.getElementById('is_buyer');
+  var genderField = document.getElementById('gender-field');
+  if (!buyer || !genderField) return;
+  function sync() { genderField.hidden = buyer.checked; }
+  buyer.addEventListener('change', sync);
+  sync();
+})();
+</script>

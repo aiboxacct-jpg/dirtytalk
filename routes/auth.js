@@ -31,19 +31,25 @@ router.post('/signup', async (req, res) => {
   const existing = await db.get('SELECT id FROM users WHERE email = ?', email);
   if (existing) return rerender('That email is already registered — try logging in.');
 
-  const gender = ['male', 'female'].includes(req.body.gender) ? req.body.gender : '';
+  const isBuyer = req.body.is_buyer ? 1 : 0;
+  const gender = !isBuyer && ['male', 'female'].includes(req.body.gender) ? req.body.gender : '';
   const hash = bcrypt.hashSync(password, 10);
   const info = await db.run(
-    'INSERT INTO users (email, password_hash, name, gender) VALUES (?, ?, ?, ?)',
+    'INSERT INTO users (email, password_hash, name, gender, is_buyer) VALUES (?, ?, ?, ?, ?)',
     email,
     hash,
     name,
-    gender
+    gender,
+    isBuyer
   );
   const newId = Number(info.lastInsertRowid);
   const handle = await uniqueHandle(getFn, name, newId);
   await db.run('UPDATE users SET handle = ? WHERE id = ?', handle, newId);
   req.session.userId = newId;
+  if (isBuyer) {
+    flash(req, 'success', "Welcome! You're all set — jump into the chat.");
+    return res.redirect('/');
+  }
   flash(req, 'success', 'Welcome! Add your Cash App / Venmo so people can tip you.');
   res.redirect('/account');
 });

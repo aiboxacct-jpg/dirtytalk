@@ -50,7 +50,7 @@ router.get('/', async (req, res) => {
   // refreshes (~every minute) while they have the site open; it stops when they
   // log out or close the tab, so they drop off the list.
   const creators = await db.all(
-    "SELECT id, name, handle, verified, avatar_url, gender FROM users WHERE online_at >= datetime('now', '-5 minutes') ORDER BY online_at DESC LIMIT 20"
+    "SELECT id, name, handle, verified, avatar_url, gender FROM users WHERE is_buyer = 0 AND online_at >= datetime('now', '-5 minutes') ORDER BY online_at DESC LIMIT 20"
   );
   res.render('room', {
     title: 'Room',

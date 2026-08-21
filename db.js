@@ -125,6 +125,7 @@ async function migrate() {
     'ALTER TABLE users ADD COLUMN handle TEXT',
     'CREATE UNIQUE INDEX IF NOT EXISTS idx_users_handle ON users(handle)',
     'ALTER TABLE users ADD COLUMN gender TEXT',
+    'ALTER TABLE users ADD COLUMN is_buyer INTEGER NOT NULL DEFAULT 0',
   ];
   for (const sql of stmts) {
     try {

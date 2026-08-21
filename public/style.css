@@ -191,6 +191,8 @@ button.tip-btn { border: none; cursor: pointer; font-family: inherit; }
 .gender { font-weight: 800; }
 .gender.male { color: #3d95ce; }
 .gender.female { color: #d6417f; }
+.buyer-check { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 0.9rem; margin: 0 0 14px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--soft, #faf7fd); cursor: pointer; }
+.buyer-check input { width: auto; margin: 0; flex: none; }
 .gender-pick { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 10px; }
 .gpick { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; font-size: 0.9rem; padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; cursor: pointer; }
 .gpick input { width: auto; margin: 0; }

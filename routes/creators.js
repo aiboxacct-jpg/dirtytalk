@@ -8,12 +8,12 @@ const router = express.Router();
 
 router.get('/:id', async (req, res) => {
   const param = req.params.id;
-  const cols = 'id, name, handle, gender, bio, cashapp, venmo, paypal, crypto, verified, avatar_url';
+  const cols = 'id, name, handle, gender, bio, cashapp, venmo, paypal, crypto, verified, avatar_url, is_buyer';
   let creator = await db.get(`SELECT ${cols} FROM users WHERE handle = ?`, param);
   if (!creator && /^\d+$/.test(param)) {
     creator = await db.get(`SELECT ${cols} FROM users WHERE id = ?`, param);
   }
-  if (!creator) {
+  if (!creator || creator.is_buyer) {
     return res.status(404).render('error', { title: 'Not found', message: 'That person does not exist.' });
   }
   const isOwner = !!req.user && req.user.id === creator.id;
