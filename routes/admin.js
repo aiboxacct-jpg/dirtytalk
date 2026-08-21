@@ -2,6 +2,7 @@
 // and add or delete users. Gated to the ADMIN_EMAIL account.
 const express = require('express');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const db = require('../db');
 
 const router = express.Router();
@@ -53,6 +54,42 @@ router.post('/add', async (req, res) => {
   await db.run('INSERT INTO users (email, password_hash, name) VALUES (?, ?, ?)', email, hash, name);
   flash(req, 'success', 'User created.');
   res.redirect('/admin');
+});
+
+// Start (or open) a private chat with a creator, so the admin can talk to them.
+// The admin is the visitor side; paywall is turned off so it never blocks them.
+router.post('/message', async (req, res) => {
+  const creatorId = Number(req.body.user_id);
+  if (creatorId === req.user.id) {
+    flash(req, 'error', "That's your own account.");
+    return res.redirect('/admin');
+  }
+  const creator = await db.get('SELECT id FROM users WHERE id = ?', creatorId);
+  if (!creator) {
+    flash(req, 'error', 'User not found.');
+    return res.redirect('/admin');
+  }
+  let thread = await db.get(
+    'SELECT * FROM threads WHERE creator_id = ? AND guest_user_id = ?',
+    creatorId,
+    req.user.id
+  );
+  if (!thread) {
+    const token = crypto.randomBytes(16).toString('hex');
+    const info = await db.run(
+      `INSERT INTO threads (creator_id, guest_id, guest_user_id, guest_name, token, paywall_on, last_at)
+       VALUES (?, NULL, ?, ?, ?, 0, datetime('now'))`,
+      creatorId,
+      req.user.id,
+      req.user.name,
+      token
+    );
+    thread = { id: Number(info.lastInsertRowid) };
+  } else if (thread.paywall_on !== 0) {
+    // Existing thread: make sure the admin isn't paywalled.
+    await db.run('UPDATE threads SET paywall_on = 0 WHERE id = ?', thread.id);
+  }
+  res.redirect('/dm/' + thread.id);
 });
 
 // Delete a user (cascades their private chats)

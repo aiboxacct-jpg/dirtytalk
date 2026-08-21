@@ -104,6 +104,7 @@ textarea { resize: vertical; }
 .admin-table th, .admin-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; vertical-align: middle; }
 .admin-table th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
 .admin-table tr:last-child td { border-bottom: none; }
+.row-actions { display: flex; gap: 6px; align-items: center; }
 .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.82rem; }
 .inline { display: inline; margin: 0; }
 .btn.danger { background: var(--danger); color: #fff; }

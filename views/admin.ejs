@@ -34,8 +34,12 @@
             </form>
           </td>
           <td class="muted"><%= (u.created_at || '').slice(0, 10) %></td>
-          <td>
+          <td class="row-actions">
             <% if (u.id !== adminId) { %>
+              <form action="/admin/message" method="post" class="inline">
+                <input type="hidden" name="user_id" value="<%= u.id %>">
+                <button class="btn small" type="submit">💬 Message</button>
+              </form>
               <form action="/admin/delete" method="post" class="inline" onsubmit="return confirm('Delete <%= u.name.replace(/'/g, "\\'") %> and all their private chats? This cannot be undone.');">
                 <input type="hidden" name="user_id" value="<%= u.id %>">
                 <button class="btn small danger" type="submit">Delete</button>
