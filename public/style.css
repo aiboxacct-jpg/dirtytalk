@@ -85,8 +85,8 @@ textarea { resize: vertical; }
 .rmsg.mine .rmsg-head { flex-direction: row-reverse; }
 .rmsg-name { font-weight: 700; color: var(--ink); }
 .rmsg-name.creator { color: var(--brand-dark); }
-.rmsg-dm { font-size: 0.72rem; font-weight: 700; color: var(--brand-dark); background: #fbe9f1; padding: 1px 8px; border-radius: 999px; white-space: nowrap; }
-.rmsg-dm:hover { background: #f6d6e7; text-decoration: none; }
+.rmsg-dm { display: inline-block; margin-top: 5px; font-size: 0.78rem; font-weight: 700; color: #fff; background: var(--brand); padding: 6px 13px; border-radius: 999px; white-space: nowrap; }
+.rmsg-dm:hover { background: var(--brand-dark); text-decoration: none; }
 .rmsg-del { border: none; background: none; color: var(--danger); cursor: pointer; font-size: 0.72rem; padding: 0 2px; line-height: 1; }
 .rmsg-del:hover { color: #a52020; }
 .admin-bar { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin: 6px 0 -2px; }
@@ -253,4 +253,18 @@ button.tip-btn { border: none; cursor: pointer; font-family: inherit; }
   .nav a, .nav .inline { width: 100%; padding: 9px 0; }
   .room-form input[type=text][name=name] { flex: 1 1 100%; }
   .room-form { flex-wrap: wrap; }
+
+  /* Tighter page padding + compact room header to give the chat more room */
+  .wrap { padding: 14px 14px 24px; }
+  .room-head h1 { font-size: 1.25rem; }
+  .room-head .sub { font-size: 0.82rem; margin-bottom: 0; }
+
+  /* "Here now" — one swipeable row instead of wrapping to many lines */
+  .creators-strip { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; gap: 6px; margin: 8px 0; scrollbar-width: none; }
+  .creators-strip::-webkit-scrollbar { display: none; }
+  .strip-label, .creator-chip { flex: 0 0 auto; }
+
+  /* Chat fills the screen with the composer visible → single scroll region */
+  .room-box { margin: 8px 0; }
+  .room-msgs { height: 50vh; min-height: 180px; }
 }
