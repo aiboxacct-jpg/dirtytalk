@@ -8,6 +8,25 @@ const { uploadSingle, uploadImage } = require('../storage');
 const router = express.Router();
 const MAX = 2000;
 
+// Ephemeral "is typing" state (in memory — not worth persisting to the DB).
+// threadId -> { creator: epochMs, guest: epochMs } — a party is "typing" until
+// that time. Refreshed by typing pings; cleared when they send a message.
+const TYPING_WINDOW = 6000;
+const typingState = new Map();
+function setTyping(threadId, role) {
+  let s = typingState.get(threadId);
+  if (!s) { s = { creator: 0, guest: 0 }; typingState.set(threadId, s); }
+  s[role] = Date.now() + TYPING_WINDOW;
+}
+function clearTyping(threadId, role) {
+  const s = typingState.get(threadId);
+  if (s) s[role] = 0;
+}
+function isTyping(threadId, role) {
+  const s = typingState.get(threadId);
+  return !!(s && s[role] > Date.now());
+}
+
 // --- Helpers (also used by the profile page) -------------------------------
 async function findThread(creatorId, req) {
   if (req.user) {
@@ -221,7 +240,18 @@ router.get('/:id/feed', async (req, res) => {
     after
   );
   const paywall = await paywallState(thread, acc);
-  res.json({ messages: serializeDm(rows, acc.isCreator), paywall });
+  const typing = isTyping(thread.id, acc.isCreator ? 'guest' : 'creator'); // is the OTHER person typing?
+  res.json({ messages: serializeDm(rows, acc.isCreator), paywall, typing });
+});
+
+// A lightweight "I'm typing" ping (kept in memory, no DB write).
+router.post('/:id/typing', async (req, res) => {
+  const thread = await db.get('SELECT * FROM threads WHERE id = ?', req.params.id);
+  if (!thread) return res.status(404).json({ ok: false });
+  const acc = access(thread, req);
+  if (!acc.ok) return res.status(403).json({ ok: false });
+  setTyping(thread.id, acc.isCreator ? 'creator' : 'guest');
+  res.json({ ok: true });
 });
 
 // --- Reply within a thread --------------------------------------------------
@@ -243,7 +273,10 @@ router.post('/:id/reply', async (req, res) => {
     return res.redirect('/dm/' + thread.id + (req.query.t ? '?t=' + encodeURIComponent(req.query.t) : ''));
   }
   const body = String(req.body.body || '').trim();
-  if (body) await addMessage(thread.id, acc.isCreator ? 'creator' : 'guest', body.slice(0, MAX));
+  if (body) {
+    await addMessage(thread.id, acc.isCreator ? 'creator' : 'guest', body.slice(0, MAX));
+    clearTyping(thread.id, acc.isCreator ? 'creator' : 'guest');
+  }
   // Ajax callers just get an OK and then poll /feed for the new message(s);
   // no-JS callers fall back to a normal redirect (page reload).
   if (wantsJson(req)) return res.json({ ok: !!body });
@@ -273,6 +306,7 @@ router.post('/:id/upload', uploadSingle('image'), async (req, res) => {
     url
   );
   await db.run("UPDATE threads SET last_at = datetime('now') WHERE id = ?", thread.id);
+  clearTyping(thread.id, acc.isCreator ? 'creator' : 'guest');
   res.json({ ok: true });
 });
 

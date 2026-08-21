@@ -44,6 +44,8 @@
     </div>
   <% } %>
 
+  <div id="typing-ind" class="typing-ind" hidden><%= otherName %> is typing<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span></div>
+
   <form id="dm-form" class="chat-form" action="/dm/<%= thread.id %>/reply<%= tokenSuffix %>" method="post">
     <textarea id="dm-reply" name="body" rows="2" maxlength="2000" placeholder="Write a reply…" required></textarea>
     <button type="button" class="emoji-btn" data-target="dm-reply" aria-label="Emoji" title="Emoji">😊</button>
@@ -64,10 +66,21 @@
   var input = document.getElementById('dm-reply');
   var empty = document.getElementById('dm-empty');
   var otherName = <%- JSON.stringify(otherName) %>;
+  var typingInd = document.getElementById('typing-ind');
   var base = '/dm/<%= thread.id %>';
   var tokenQ = '<%= tokenSuffix %>';           // '?t=...' or ''
   var replyUrl = base + '/reply' + tokenQ;
   var uploadUrl = base + '/upload' + tokenQ;
+  var typingUrl = base + '/typing' + tokenQ;
+
+  // Tell the other person we're typing (throttled to once every ~2.5s).
+  var lastTypingPing = 0;
+  input.addEventListener('input', function () {
+    var now = Date.now();
+    if (now - lastTypingPing < 2500) return;
+    lastTypingPing = now;
+    fetch(typingUrl, { method: 'POST', headers: { accept: 'application/json' } }).catch(function () {});
+  });
   function feedUrl(after) { return base + '/feed' + (tokenQ ? tokenQ + '&' : '?') + 'after=' + after; }
   var lastId = <%= messages.length ? messages[messages.length - 1].id : 0 %>;
   var atBottom = true;
@@ -193,6 +206,7 @@
       if (!r.ok) return;
       var data = await r.json();
       if (data.paywall) { paywall = data.paywall; clockOffset = paywall.now ? paywall.now - Date.now() : clockOffset; renderPaywall(); }
+      if (typingInd) { var wasHidden = typingInd.hidden; typingInd.hidden = !data.typing; if (wasHidden && data.typing) scrollIfNeeded(); }
       if (data.messages && data.messages.length) { data.messages.forEach(addMessage); scrollIfNeeded(); markSeen(); }
     } catch (e) {}
   }
