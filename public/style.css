@@ -51,6 +51,9 @@ h2 { font-size: 1.05rem; margin: 18px 0 6px; }
 }
 .btn:hover { background: var(--brand-dark); text-decoration: none; }
 .btn.small { padding: 6px 13px; font-size: 0.85rem; border-radius: 8px; }
+.nav a.nav-cta { color: #fff; animation: cta-blink 1.8s ease-in-out infinite; }
+@keyframes cta-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+@media (prefers-reduced-motion: reduce) { .nav a.nav-cta { animation: none; } }
 
 /* Cards & forms */
 .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; margin: 16px 0; }
