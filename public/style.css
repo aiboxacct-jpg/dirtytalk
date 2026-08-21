@@ -251,8 +251,12 @@ button.tip-btn { border: none; cursor: pointer; font-family: inherit; }
   .nav { display: none; position: absolute; top: 100%; right: 0; left: 0; flex-direction: column; align-items: flex-start; gap: 0; background: #fff; border-bottom: 1px solid var(--line); padding: 6px 18px 14px; }
   body.nav-open .nav { display: flex; }
   .nav a, .nav .inline { width: 100%; padding: 9px 0; }
+  .room-form { flex-wrap: wrap; gap: 6px; padding: 10px; }
   .room-form input[type=text][name=name] { flex: 1 1 100%; }
-  .room-form { flex-wrap: wrap; }
+  /* Big, easy-to-type message box: full width, taller, 16px (stops iOS zoom) */
+  .room-form #room-body { flex: 1 1 100%; font-size: 16px; padding: 12px 14px; }
+  .room-form .emoji-btn, .room-form .photo-btn { font-size: 1.3rem; padding: 8px 12px; }
+  .room-form .btn { margin-left: auto; }
 
   /* Tighter page padding + compact room header to give the chat more room */
   .wrap { padding: 14px 14px 24px; }
