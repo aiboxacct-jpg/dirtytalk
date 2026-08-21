@@ -168,6 +168,7 @@ textarea { resize: vertical; }
 .tip-btn.cashapp { background: #00c244; }
 .tip-btn.venmo { background: #3d95ce; }
 .tip-btn.paypal { background: #003087; }
+.tip-btn.revolut { background: #191c1f; }
 .tip-btn.crypto { background: #f7931a; }
 button.tip-btn { border: none; cursor: pointer; font-family: inherit; }
 .tip-btn.static { cursor: default; }

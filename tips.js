@@ -29,6 +29,24 @@ function tipLinks(u) {
     out.push({ kind: 'paypal', label: 'PayPal', display: pp, href });
   }
 
+  const rv = clean(u.revolut);
+  if (rv) {
+    let href = null;
+    let display = rv;
+    if (/^https?:\/\//i.test(rv)) {
+      href = rv;
+    } else if (/revolut\.me\//i.test(rv)) {
+      href = 'https://' + rv.replace(/^\/+/, '');
+    } else {
+      const tag = rv.replace(/^@/, '').replace(/[^\w.-]/g, '');
+      if (tag) {
+        href = 'https://revolut.me/' + tag;
+        display = '@' + tag;
+      }
+    }
+    out.push({ kind: 'revolut', label: 'Revolut', display, href });
+  }
+
   const cr = clean(u.crypto);
   if (cr) {
     const short = cr.length > 18 ? cr.slice(0, 8) + '…' + cr.slice(-6) : cr;

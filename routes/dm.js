@@ -94,7 +94,7 @@ function flash(req, type, msg) {
 // Load a thread joined with the creator's info + paywall settings.
 function threadWithCreator(id) {
   return db.get(
-    `SELECT t.*, c.name AS creator_name, c.cashapp, c.venmo, c.paywall_enabled, c.free_seconds
+    `SELECT t.*, c.name AS creator_name, c.cashapp, c.venmo, c.paypal, c.revolut, c.crypto, c.paywall_enabled, c.free_seconds
        FROM threads t JOIN users c ON c.id = t.creator_id WHERE t.id = ?`,
     id
   );

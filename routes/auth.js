@@ -88,6 +88,7 @@ router.post('/account', requireLogin, async (req, res) => {
   const cashapp = String(req.body.cashapp || '').trim().slice(0, 60);
   const venmo = String(req.body.venmo || '').trim().slice(0, 60);
   const paypal = String(req.body.paypal || '').trim().slice(0, 120);
+  const revolut = String(req.body.revolut || '').trim().slice(0, 120);
   const crypto = String(req.body.crypto || '').trim().slice(0, 120);
   const gender = ['male', 'female'].includes(req.body.gender) ? req.body.gender : '';
   if (!name) {
@@ -98,13 +99,14 @@ router.post('/account', requireLogin, async (req, res) => {
   if (!Number.isFinite(freeMin)) freeMin = 2;
   freeMin = Math.max(1, Math.min(120, freeMin));
   await db.run(
-    'UPDATE users SET name = ?, bio = ?, gender = ?, cashapp = ?, venmo = ?, paypal = ?, crypto = ?, paywall_enabled = ?, free_seconds = ? WHERE id = ?',
+    'UPDATE users SET name = ?, bio = ?, gender = ?, cashapp = ?, venmo = ?, paypal = ?, revolut = ?, crypto = ?, paywall_enabled = ?, free_seconds = ? WHERE id = ?',
     name,
     bio,
     gender,
     cashapp,
     venmo,
     paypal,
+    revolut,
     crypto,
     paywall,
     freeMin * 60,
