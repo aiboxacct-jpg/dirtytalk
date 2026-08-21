@@ -21,7 +21,7 @@ function flash(req, type, msg) {
 }
 
 function listUsers() {
-  return db.all('SELECT id, email, name, verified, bill_cents, sales_count, created_at FROM users ORDER BY created_at DESC');
+  return db.all('SELECT id, email, name, verified, bill_cents, sales_count, due_date, created_at FROM users ORDER BY created_at DESC');
 }
 
 // Dashboard
@@ -90,6 +90,17 @@ router.post('/message', async (req, res) => {
     await db.run('UPDATE threads SET paywall_on = 0 WHERE id = ?', thread.id);
   }
   res.redirect('/dm/' + thread.id);
+});
+
+// Set (or clear) a creator's bill due date. On/after this day their account
+// locks until it's cleared or moved to a future date. Empty value clears it.
+router.post('/due', async (req, res) => {
+  const id = Number(req.body.user_id);
+  let due = String(req.body.due_date || '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(due)) due = null; // blank/invalid => no due date
+  await db.run('UPDATE users SET due_date = ? WHERE id = ?', due, id);
+  flash(req, 'success', due ? 'Due date set — account locks on ' + due + '.' : 'Due date cleared — account unlocked.');
+  res.redirect('/admin');
 });
 
 // Delete a user (cascades their private chats)

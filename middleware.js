@@ -25,6 +25,15 @@ async function loadUser(req, res, next) {
   next();
 }
 
+// Today as YYYY-MM-DD (UTC) — matches the admin-set due_date format.
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+// A creator is locked once their admin-set due date has arrived/passed.
+function isLocked(u) {
+  return !!(u && u.due_date && todayStr() >= u.due_date);
+}
+
 function requireLogin(req, res, next) {
   if (req.user) return next();
   req.session.returnTo = req.originalUrl;
@@ -36,4 +45,4 @@ function requireAdmin(req, res, next) {
   return res.status(403).json({ ok: false, error: 'Admins only.' });
 }
 
-module.exports = { loadUser, requireLogin, requireAdmin };
+module.exports = { loadUser, requireLogin, requireAdmin, isLocked };

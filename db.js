@@ -131,6 +131,9 @@ async function migrate() {
     // this to the platform and settle up off-site. bill_cents in whole cents.
     'ALTER TABLE users ADD COLUMN bill_cents INTEGER NOT NULL DEFAULT 0',
     'ALTER TABLE users ADD COLUMN sales_count INTEGER NOT NULL DEFAULT 0',
+    // Admin-set bill due date (YYYY-MM-DD). On/after this day the creator's
+    // account is locked until they pay. Empty/null = no due date, never locked.
+    'ALTER TABLE users ADD COLUMN due_date TEXT',
   ];
   for (const sql of stmts) {
     try {

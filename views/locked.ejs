@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Account locked</title>
+  <link rel="stylesheet" href="/public/style.css">
+</head>
+<body>
+  <div class="age-wrap">
+    <div class="age-box">
+      <h1>🔒 Account locked</h1>
+      <p>Your site-fee payment was due <strong><%= user.due_date %></strong>. Your account is paused until it's paid.</p>
+
+      <div class="stat-cards" style="margin:16px 0;">
+        <div class="stat-card">
+          <div class="stat-num"><%= '$' + ((user.bill_cents || 0) / 100).toFixed(2) %></div>
+          <div class="stat-label">Amount you owe</div>
+        </div>
+      </div>
+
+      <a class="btn cashapp-pay" style="width:100%;box-sizing:border-box;" href="https://cash.app/$<%= cashapp %>" target="_blank" rel="noopener noreferrer">💵 Pay $<%= cashapp %> on Cash App</a>
+      <p class="hint" style="margin-top:14px;">Once we receive your payment we'll reactivate your account. Questions? Reply to us and we'll sort it out.</p>
+      <form action="/logout" method="post" style="margin-top:10px;"><button class="linkbtn" type="submit">Log out</button></form>
+    </div>
+  </div>
+</body>
+</html>

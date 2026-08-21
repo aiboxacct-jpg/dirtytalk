@@ -177,6 +177,12 @@ textarea { resize: vertical; }
 .pay-btn:hover { background: #1a7d36; }
 .pay-note { font-size: 0.82rem; color: #1e8e3e; font-weight: 700; }
 .bill-owed { font-weight: 800; color: var(--brand); }
+.cashapp-pay { display: inline-block; background: #00c244; margin-top: 4px; }
+.cashapp-pay:hover { background: #00a83a; }
+.due-warning { background: #fff4e5; border: 1px solid #ffc98a; color: #8a5300; border-radius: 10px; padding: 10px 12px; font-size: 0.86rem; margin: 4px 0 10px; }
+.due-form { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.due-input { padding: 5px 7px; border: 1px solid var(--line); border-radius: 8px; font: inherit; }
+.locked-tag { background: var(--danger); color: #fff; }
 .tip-btn.paypal { background: #003087; }
 .tip-btn.revolut { background: #191c1f; }
 .tip-btn.crypto { background: #f7931a; }

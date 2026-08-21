@@ -7,7 +7,10 @@ const cookieSession = require('cookie-session');
 const expressLayouts = require('express-ejs-layouts');
 
 const db = require('./db');
-const { loadUser } = require('./middleware');
+const { loadUser, isLocked } = require('./middleware');
+
+// Platform Cash App handle creators send their site-fee bill to.
+const SITE_CASHAPP = process.env.SITE_CASHAPP || 'karmaupvotes';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -59,6 +62,32 @@ app.use((req, res, next) => {
 });
 
 app.use(loadUser);
+
+// Cash App handle available to every view (pay-your-bill buttons).
+app.use((req, res, next) => {
+  res.locals.siteCashapp = SITE_CASHAPP;
+  next();
+});
+
+// --- Account lock (site-fee bill past its admin-set due date) ---------------
+// Guests and admins are never locked. A locked creator is walled off to the
+// pay-to-reactivate page until an admin clears/moves their due date.
+app.use((req, res, next) => {
+  if (!req.user || req.isAdmin || !isLocked(req.user)) return next();
+  const exempt =
+    req.path === '/locked' || req.path === '/logout' || req.path === '/age' || req.path.startsWith('/public');
+  if (exempt) return next();
+  if ((req.get('accept') || '').includes('application/json')) {
+    return res.status(423).json({ ok: false, locked: true });
+  }
+  return res.redirect('/locked');
+});
+
+app.get('/locked', (req, res) => {
+  if (!req.user) return res.redirect('/login');
+  if (!isLocked(req.user)) return res.redirect('/'); // not locked — nothing to see
+  res.render('locked', { title: 'Account locked', layout: false, user: req.user, cashapp: SITE_CASHAPP });
+});
 
 // --- Age gate (18+) ---------------------------------------------------------
 app.use((req, res, next) => {

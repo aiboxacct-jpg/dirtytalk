@@ -1,6 +1,7 @@
 <h1>🛡 Admin</h1>
 <p class="page-sub">Manage users, verification, and accounts.</p>
 <% if (error) { %><div class="form-error"><%= error %></div><% } %>
+<% var today = new Date().toISOString().slice(0, 10); %>
 
 <div class="card">
   <h2 style="margin-top:0;">Add a user</h2>
@@ -15,7 +16,7 @@
 <div class="card table-wrap">
   <table class="admin-table">
     <thead>
-      <tr><th>Name</th><th>Email</th><th>Verified</th><th>Bill</th><th>Joined</th><th></th></tr>
+      <tr><th>Name</th><th>Email</th><th>Verified</th><th>Bill</th><th>Due / lock</th><th>Joined</th><th></th></tr>
     </thead>
     <tbody>
       <% users.forEach(function(u){ %>
@@ -35,6 +36,19 @@
           </td>
           <td<% if (u.bill_cents) { %> class="bill-owed"<% } else { %> class="muted"<% } %>>
             <%= '$' + ((u.bill_cents || 0) / 100).toFixed(2) %><% if (u.sales_count) { %> <span class="muted">(<%= u.sales_count %>)</span><% } %>
+          </td>
+          <td>
+            <% var locked = u.due_date && today >= u.due_date; %>
+            <% if (u.id === adminId) { %>
+              <span class="muted">—</span>
+            <% } else { %>
+              <form action="/admin/due" method="post" class="due-form">
+                <input type="hidden" name="user_id" value="<%= u.id %>">
+                <input type="date" name="due_date" value="<%= u.due_date || '' %>" class="due-input">
+                <button class="btn small" type="submit">Set</button>
+                <% if (locked) { %><span class="tag locked-tag">LOCKED</span><% } %>
+              </form>
+            <% } %>
           </td>
           <td class="muted"><%= (u.created_at || '').slice(0, 10) %></td>
           <td class="row-actions">
