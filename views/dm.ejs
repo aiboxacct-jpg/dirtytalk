@@ -34,13 +34,13 @@
   <% } %>
   <% if (isCreator) { %>
     <div id="hostbar" class="hostbar">
-      <span id="hoststatus" class="host-status"></span>
       <label class="free-toggle" title="When checked, this chat is free. Uncheck to charge a tip to continue."><input type="checkbox" id="pw-free"> Free chat</label>
       <button type="button" id="pw-lock" class="btn small muted" hidden>💸 Turn on Pay Mode</button>
       <span id="pw-add-wrap" class="add-wrap" hidden>
         <input type="number" id="pw-add-min" class="add-min" min="1" max="240" step="1" value="<%= Math.round(paywall.freeSeconds / 60) %>" aria-label="Minutes to add">
         <button type="button" id="pw-add" class="btn small">➕ Add min</button>
       </span>
+      <span id="hoststatus" class="host-status"></span>
     </div>
   <% } %>
 
