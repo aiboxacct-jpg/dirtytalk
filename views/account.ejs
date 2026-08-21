@@ -3,21 +3,40 @@
   <p class="sub"><%= user.email %></p>
   <% if (error) { %><div class="form-error"><%= error %></div><% } %>
 
-  <div class="stat-cards">
-    <div class="stat-card">
-      <div class="stat-num">$1.00</div>
-      <div class="stat-label">Site fee per sale</div>
+  <div class="acct-tabs">
+    <div class="tab-bar" role="tablist">
+      <button type="button" class="tab-btn active" data-tab="dash">📊 Dashboard</button>
+      <button type="button" class="tab-btn" data-tab="bill">💵 Pay your bill</button>
     </div>
-    <div class="stat-card">
-      <div class="stat-num"><%= '$' + ((user.bill_cents || 0) / 100).toFixed(2) %></div>
-      <div class="stat-label">Your current bill<% if (user.sales_count) { %> · <%= user.sales_count %> sale<%= user.sales_count === 1 ? '' : 's' %><% } %></div>
+
+    <div class="tab-panel active" data-panel="dash">
+      <div class="mini-cards">
+        <div class="mini-card">
+          <div class="mini-num"><%= user.sales_count || 0 %></div>
+          <div class="mini-label">Sales logged</div>
+        </div>
+      </div>
+      <p class="hint" style="margin:8px 0 2px;">Your revenue &amp; receipt history will show here soon.</p>
+    </div>
+
+    <div class="tab-panel" data-panel="bill">
+      <div class="mini-cards">
+        <div class="mini-card">
+          <div class="mini-num">$1.00</div>
+          <div class="mini-label">Fee per sale</div>
+        </div>
+        <div class="mini-card">
+          <div class="mini-num"><%= '$' + ((user.bill_cents || 0) / 100).toFixed(2) %></div>
+          <div class="mini-label">Current bill<% if (user.sales_count) { %> · <%= user.sales_count %><% } %></div>
+        </div>
+      </div>
+      <% if (user.due_date) { %>
+        <div class="due-warning">⚠ Payment due by <strong><%= user.due_date %></strong> — your account locks that day until it's paid.</div>
+      <% } %>
+      <p class="hint" style="margin:8px 0;">$1 per sale — a running tab you owe. Settle up anytime.</p>
+      <a class="btn small cashapp-pay" href="https://cash.app/$<%= siteCashapp %>" target="_blank" rel="noopener noreferrer">💵 Pay on Cash App ($<%= siteCashapp %>)</a>
     </div>
   </div>
-  <p class="hint">We charge <strong>$1 per sale</strong>. Each time you tap “💵 Payment received” in a chat, $1 is added here. It’s a running tab you owe — settle up with us anytime.</p>
-  <% if (user.due_date) { %>
-    <div class="due-warning">⚠ Payment due by <strong><%= user.due_date %></strong> — your account locks that day until it's paid.</div>
-  <% } %>
-  <a class="btn cashapp-pay" href="https://cash.app/$<%= siteCashapp %>" target="_blank" rel="noopener noreferrer">💵 Pay your bill on Cash App ($<%= siteCashapp %>)</a>
 
   <% var _slug = user.handle || user.id; %>
   <p class="hint">Your public profile & tip link:
@@ -79,6 +98,19 @@
 </div>
 
 <script>
+(function () {
+  // Dashboard / Pay-your-bill tabs
+  var tabBtns = document.querySelectorAll('.acct-tabs .tab-btn');
+  var tabPanels = document.querySelectorAll('.acct-tabs .tab-panel');
+  tabBtns.forEach(function (b) {
+    b.addEventListener('click', function () {
+      var name = b.getAttribute('data-tab');
+      tabBtns.forEach(function (x) { x.classList.toggle('active', x === b); });
+      tabPanels.forEach(function (p) { p.classList.toggle('active', p.getAttribute('data-panel') === name); });
+    });
+  });
+})();
+
 (function () {
   var btn = document.getElementById('avatar-btn');
   var file = document.getElementById('avatar-file');
