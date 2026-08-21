@@ -23,7 +23,7 @@
   </nav>
 </header>
 
-<main class="wrap">
+<main class="wrap<%= locals.wide ? ' wrap-wide' : '' %>">
   <% if (flash) { %><div class="flash <%= flash.type %>"><%= flash.msg %></div><% } %>
   <%- body %>
 </main>

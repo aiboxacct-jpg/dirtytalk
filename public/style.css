@@ -41,6 +41,7 @@ h2 { font-size: 1.05rem; margin: 18px 0 6px; }
 .menu-toggle { display: none; margin-left: auto; border: none; background: none; font-size: 1.5rem; cursor: pointer; color: var(--ink); }
 
 .wrap { max-width: 720px; margin: 0 auto; padding: 22px 18px 40px; }
+.wrap-wide { max-width: 1080px; }
 
 /* Buttons */
 .btn {
@@ -106,6 +107,7 @@ textarea { resize: vertical; }
 .admin-table tr:last-child td { border-bottom: none; }
 .row-actions { display: flex; gap: 6px; align-items: center; }
 .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.82rem; }
+.admin-table .mono { white-space: normal; word-break: break-word; } /* email wraps on narrow widths instead of forcing a scrollbar */
 .inline { display: inline; margin: 0; }
 .btn.danger { background: var(--danger); color: #fff; }
 .btn.danger:hover { background: #b83a3a; }

@@ -26,7 +26,7 @@ function listUsers() {
 
 // Dashboard
 router.get('/', async (req, res) => {
-  res.render('admin', { title: 'Admin', users: await listUsers(), adminId: req.user.id, error: null });
+  res.render('admin', { title: 'Admin', users: await listUsers(), adminId: req.user.id, error: null, wide: true });
 });
 
 // Grant / remove the verified badge
@@ -44,7 +44,7 @@ router.post('/add', async (req, res) => {
   const name = String(req.body.name || '').trim().slice(0, 30);
   const password = String(req.body.password || '');
   const rerender = async (error) =>
-    res.render('admin', { title: 'Admin', users: await listUsers(), adminId: req.user.id, error });
+    res.render('admin', { title: 'Admin', users: await listUsers(), adminId: req.user.id, error, wide: true });
 
   if (!email || !name || !password) return rerender('Fill in name, email and password.');
   if (password.length < 6) return rerender('Password must be at least 6 characters.');
