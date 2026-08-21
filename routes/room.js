@@ -24,9 +24,11 @@ function serialize(rows, req) {
     body: m.body,
     image: m.image_url || null,
     created_at: m.created_at,
-    creatorId: m.user_id || null, // set => a signed-up creator you can DM + tip
+    // set => a signed-up creator you can DM + tip. Buyers post in the room but
+    // aren't creators, so they get no "Chat Privately" CTA.
+    creatorId: m.creator_is_buyer ? null : m.user_id || null,
     creatorHandle: m.creator_handle || m.user_id, // pretty URL slug
-    avatar: m.creator_avatar || null,
+    avatar: m.creator_is_buyer ? null : m.creator_avatar || null,
     gender: m.creator_gender || null,
     verified: !!m.creator_verified,
     mine:
@@ -41,7 +43,7 @@ function wantsJson(req) {
 // Room page
 router.get('/', async (req, res) => {
   const rows = await db.all(
-    `SELECT gm.*, u.verified AS creator_verified, u.handle AS creator_handle, u.avatar_url AS creator_avatar, u.gender AS creator_gender
+    `SELECT gm.*, u.verified AS creator_verified, u.handle AS creator_handle, u.avatar_url AS creator_avatar, u.gender AS creator_gender, u.is_buyer AS creator_is_buyer
        FROM room_messages gm LEFT JOIN users u ON u.id = gm.user_id
       ORDER BY gm.id DESC LIMIT 100`
   );
@@ -65,7 +67,7 @@ router.get('/', async (req, res) => {
 router.get('/feed', async (req, res) => {
   const after = Number(req.query.after) || 0;
   const rows = await db.all(
-    `SELECT gm.*, u.verified AS creator_verified, u.handle AS creator_handle, u.avatar_url AS creator_avatar, u.gender AS creator_gender
+    `SELECT gm.*, u.verified AS creator_verified, u.handle AS creator_handle, u.avatar_url AS creator_avatar, u.gender AS creator_gender, u.is_buyer AS creator_is_buyer
        FROM room_messages gm LEFT JOIN users u ON u.id = gm.user_id
       WHERE gm.id > ? ORDER BY gm.id LIMIT 200`,
     after
