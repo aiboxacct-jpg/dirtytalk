@@ -94,7 +94,9 @@ function flash(req, type, msg) {
 // Load a thread joined with the creator's info + paywall settings.
 function threadWithCreator(id) {
   return db.get(
-    `SELECT t.*, c.name AS creator_name, c.cashapp, c.venmo, c.paypal, c.revolut, c.crypto, c.paywall_enabled, c.free_seconds
+    `SELECT t.*, c.name AS creator_name, c.avatar_url AS creator_avatar, c.bio AS creator_bio,
+            c.gender AS creator_gender, c.verified AS creator_verified, c.handle AS creator_handle,
+            c.cashapp, c.venmo, c.paypal, c.revolut, c.crypto, c.paywall_enabled, c.free_seconds
        FROM threads t JOIN users c ON c.id = t.creator_id WHERE t.id = ?`,
     id
   );
@@ -220,6 +222,13 @@ router.get('/:id', async (req, res) => {
     messages: serializeDm(messages, acc.isCreator),
     isCreator: acc.isCreator,
     otherName: acc.isCreator ? thread.guest_name || 'Guest' : thread.creator_name,
+    // The other party's profile bits — only the creator has these, so they show
+    // on the guest's side (avatar in the header + beside each of her messages).
+    otherAvatar: acc.isCreator ? null : thread.creator_avatar || null,
+    otherBio: acc.isCreator ? null : thread.creator_bio || null,
+    otherGender: acc.isCreator ? null : thread.creator_gender || null,
+    otherVerified: acc.isCreator ? false : !!thread.creator_verified,
+    otherHandle: acc.isCreator ? null : thread.creator_handle || thread.creator_id,
     // The visitor can tip the creator from inside the private chat.
     tips: acc.isCreator ? [] : tipLinks(thread),
     paywall,

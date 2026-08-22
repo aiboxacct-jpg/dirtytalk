@@ -1,10 +1,18 @@
 <p class="back"><a href="/dm">← All messages</a></p>
 
 <div class="card">
-  <h1 class="dm-title"><%= otherName %></h1>
-  <p class="sub" style="margin-top:0;">
-    <% if (isCreator) { %>Private chat<% } else { %>Private chat · <a href="/u/<%= thread.creator_id %>">view profile</a><% } %>
-  </p>
+  <div class="dm-head">
+    <% if (otherAvatar) { %>
+      <span class="avatar-preview" style="background-image:url('<%= otherAvatar %>')"></span>
+    <% } %>
+    <div class="dm-head-info">
+      <h1 class="dm-title"><%= otherName %><% if (otherGender) { %> <span class="gender <%= otherGender %>" title="<%= otherGender %>"><%= otherGender === 'male' ? '♂' : '♀' %></span><% } %><% if (otherVerified) { %> <span class="verified" title="Verified">✔</span><% } %></h1>
+      <p class="sub" style="margin-top:0;">
+        <% if (isCreator) { %>Private chat<% } else { %>Private chat · <a href="/u/<%= otherHandle %>">view profile</a><% } %>
+      </p>
+      <% if (otherBio) { %><p class="dm-bio"><%= otherBio %></p><% } %>
+    </div>
+  </div>
 
   <% if (!isCreator && tips && tips.length) { %>
     <%- include('partials/tips', { tips: tips, tipName: thread.creator_name }) %>
@@ -16,7 +24,7 @@
     <% } %>
     <% messages.forEach(function(m){ %>
       <div class="msg <%= m.mine ? 'mine' : 'them' %>" data-id="<%= m.id %>">
-        <span class="who"><%= m.mine ? 'You' : otherName %></span>
+        <span class="who"><% if (!m.mine && otherAvatar) { %><span class="who-avatar" style="background-image:url('<%= otherAvatar %>')"></span><% } %><%= m.mine ? 'You' : otherName %></span>
         <% if (m.image) { %><a class="chat-img-link" href="<%= m.image %>" target="_blank" rel="noopener"><img class="chat-img" src="<%= m.image %>" alt="shared picture" loading="lazy"></a><% } %>
         <% if (m.body) { %><p><%= m.body %></p><% } %>
       </div>
@@ -68,6 +76,7 @@
   var input = document.getElementById('dm-reply');
   var empty = document.getElementById('dm-empty');
   var otherName = <%- JSON.stringify(otherName) %>;
+  var otherAvatar = <%- JSON.stringify(otherAvatar || null) %>;
   var typingInd = document.getElementById('typing-ind');
   var base = '/dm/<%= thread.id %>';
   var tokenQ = '<%= tokenSuffix %>';           // '?t=...' or ''
@@ -203,7 +212,14 @@
     if (box.querySelector('.msg[data-id="' + m.id + '"]')) return;
     var wrap = el('div', 'msg ' + (m.mine ? 'mine' : 'them'));
     wrap.setAttribute('data-id', m.id);
-    wrap.appendChild(el('span', 'who', m.mine ? 'You' : otherName));
+    var who = el('span', 'who');
+    if (!m.mine && otherAvatar) {
+      var wav = el('span', 'who-avatar');
+      wav.style.backgroundImage = "url('" + otherAvatar + "')";
+      who.appendChild(wav);
+    }
+    who.appendChild(document.createTextNode(m.mine ? 'You' : otherName));
+    wrap.appendChild(who);
     if (m.image) {
       var link = document.createElement('a');
       link.className = 'chat-img-link'; link.href = m.image; link.target = '_blank'; link.rel = 'noopener';
