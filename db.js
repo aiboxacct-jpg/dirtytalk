@@ -141,6 +141,10 @@ async function migrate() {
     'ALTER TABLE users ADD COLUMN due_date TEXT',
     // Marks a thread the admin started from the dashboard (labeled "admin DM").
     'ALTER TABLE threads ADD COLUMN admin_dm INTEGER NOT NULL DEFAULT 0',
+    // Host's one-time offer: pay offer_cents (advertised) for offer_minutes of
+    // private chat. Both > 0 = the offer is active.
+    'ALTER TABLE users ADD COLUMN offer_cents INTEGER NOT NULL DEFAULT 0',
+    'ALTER TABLE users ADD COLUMN offer_minutes INTEGER NOT NULL DEFAULT 0',
   ];
   for (const sql of stmts) {
     try {

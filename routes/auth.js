@@ -99,8 +99,13 @@ router.post('/account', requireLogin, async (req, res) => {
   let freeMin = parseInt(req.body.free_minutes, 10);
   if (!Number.isFinite(freeMin)) freeMin = 2;
   freeMin = Math.max(1, Math.min(120, freeMin));
+  // One-time offer: advertised price (dollars) for a block of minutes.
+  const offerDollars = parseFloat(req.body.offer_price);
+  const offerCents = Number.isFinite(offerDollars) && offerDollars > 0 ? Math.round(offerDollars * 100) : 0;
+  let offerMin = parseInt(req.body.offer_minutes, 10);
+  offerMin = Number.isFinite(offerMin) && offerMin > 0 ? Math.min(240, offerMin) : 0;
   await db.run(
-    'UPDATE users SET name = ?, bio = ?, gender = ?, cashapp = ?, venmo = ?, paypal = ?, revolut = ?, crypto = ?, paywall_enabled = ?, free_seconds = ? WHERE id = ?',
+    'UPDATE users SET name = ?, bio = ?, gender = ?, cashapp = ?, venmo = ?, paypal = ?, revolut = ?, crypto = ?, paywall_enabled = ?, free_seconds = ?, offer_cents = ?, offer_minutes = ? WHERE id = ?',
     name,
     bio,
     gender,
@@ -111,6 +116,8 @@ router.post('/account', requireLogin, async (req, res) => {
     crypto,
     paywall,
     freeMin * 60,
+    offerCents,
+    offerMin,
     req.user.id
   );
   // Keep the profile URL handle in sync with the display name.

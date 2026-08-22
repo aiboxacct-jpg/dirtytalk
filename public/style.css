@@ -179,6 +179,11 @@ textarea { resize: vertical; }
 .pay-btn:hover { background: #1a7d36; }
 .pay-note { font-size: 0.82rem; color: #1e8e3e; font-weight: 700; }
 .pay-warn { margin: 6px 0 0; font-size: 0.78rem; color: #8a5300; background: #fff4e5; border: 1px solid #ffc98a; border-radius: 8px; padding: 6px 10px; display: inline-block; }
+.offer-card { background: linear-gradient(135deg, #fff2f8, #f3ecff); border: 1px solid #f2c9e0; border-radius: 12px; padding: 11px 14px; margin: 12px 0; font-size: 0.92rem; color: var(--ink); }
+.offer-fields { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 4px 0 4px; font-weight: 600; }
+.offer-fields input { width: 90px; }
+.offer-btn { background: #b23fb0; }
+.offer-btn:hover { background: #9a2f98; }
 .bill-owed { font-weight: 800; color: var(--brand); }
 .fee-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin: -8px 0 20px; }
 .fee-form { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; }

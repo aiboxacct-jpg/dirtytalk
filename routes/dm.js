@@ -121,7 +121,8 @@ function threadWithCreator(id) {
   return db.get(
     `SELECT t.*, c.name AS creator_name, c.avatar_url AS creator_avatar, c.bio AS creator_bio,
             c.gender AS creator_gender, c.verified AS creator_verified, c.handle AS creator_handle,
-            c.cashapp, c.venmo, c.paypal, c.revolut, c.crypto, c.paywall_enabled, c.free_seconds
+            c.cashapp, c.venmo, c.paypal, c.revolut, c.crypto, c.paywall_enabled, c.free_seconds,
+            c.offer_cents, c.offer_minutes
        FROM threads t JOIN users c ON c.id = t.creator_id WHERE t.id = ?`,
     id
   );
@@ -256,6 +257,11 @@ router.get('/:id', async (req, res) => {
     otherHandle: acc.isCreator ? null : thread.creator_handle || thread.creator_id,
     // The visitor can tip the creator from inside the private chat.
     tips: acc.isCreator ? [] : tipLinks(thread),
+    // The creator's one-time offer (price + minutes), shown to the guest and
+    // grantable by the host with one tap.
+    offer: thread.offer_cents > 0 && thread.offer_minutes > 0
+      ? { cents: thread.offer_cents, minutes: thread.offer_minutes, price: '$' + (thread.offer_cents / 100).toFixed(2) }
+      : null,
     paywall,
     tokenSuffix: req.query.t ? '?t=' + encodeURIComponent(req.query.t) : '',
   });

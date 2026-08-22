@@ -14,6 +14,10 @@
     </div>
   </div>
 
+  <% if (!isCreator && offer) { %>
+    <div class="offer-card">🎁 <strong><%= otherName %>’s deal:</strong> <%= offer.price %> for <%= offer.minutes %> minutes of private chat — tip <%= offer.price %> below and your time unlocks.</div>
+  <% } %>
+
   <% if (!isCreator && tips && tips.length) { %>
     <%- include('partials/tips', { tips: tips, tipName: thread.creator_name }) %>
   <% } %>
@@ -60,6 +64,7 @@
         <input type="number" id="pw-add-min" class="add-min" min="1" max="240" step="1" value="<%= Math.round(paywall.freeSeconds / 60) %>" aria-label="Minutes to add">
         <button type="button" id="pw-add" class="btn small">➕ Add min</button>
       </span>
+      <% if (offer) { %><button type="button" id="offer-grant" class="btn small offer-btn" data-min="<%= offer.minutes %>" title="Guest paid your <%= offer.price %> offer — give them <%= offer.minutes %> minutes">🎁 Grant <%= offer.minutes %>m</button><% } %>
       <span id="hoststatus" class="host-status"></span>
       <button type="button" id="pay-received" class="btn small pay-btn" title="Tap when a tip lands — adds the site fee to your bill">💵 Payment received</button>
       <span id="pay-note" class="pay-note" hidden></span>
@@ -189,6 +194,14 @@
   if (pwAdd) pwAdd.addEventListener('click', function () {
     var m = parseInt(pwAddMin && pwAddMin.value, 10);
     if (!Number.isFinite(m) || m < 1) m = 2;
+    hostAction('add', m);
+  });
+  // One-time offer: grant the preset minutes once the guest has paid.
+  var offerGrant = document.getElementById('offer-grant');
+  if (offerGrant) offerGrant.addEventListener('click', function () {
+    var m = parseInt(offerGrant.getAttribute('data-min'), 10);
+    if (!(m > 0)) return;
+    if (!confirm('Grant ' + m + ' minutes? Only do this once the guest has paid your offer.')) return;
     hostAction('add', m);
   });
 

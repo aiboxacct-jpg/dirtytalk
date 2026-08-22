@@ -21,6 +21,10 @@
       <a href="/dm">Messages</a>. Add your tip handles in <a href="/account">Account</a>.</p>
   <% } else { %>
 
+    <% if (creator.offer_cents > 0 && creator.offer_minutes > 0) { %>
+      <div class="offer-card">🎁 <strong><%= creator.name %>’s deal:</strong> <%= '$' + (creator.offer_cents / 100).toFixed(2) %> for <%= creator.offer_minutes %> minutes of private chat.</div>
+    <% } %>
+
     <% if (tips && tips.length) { %>
       <div id="tip" class="tip-card">
         <%- include('partials/tips', { tips: tips, tipName: creator.name }) %>
