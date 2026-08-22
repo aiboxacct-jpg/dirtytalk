@@ -223,6 +223,8 @@ button.tip-btn { border: none; cursor: pointer; font-family: inherit; }
 .rmsg-avatar.avatar-broken, .chip-avatar.avatar-broken, .who-avatar.avatar-broken { display: inline-flex; align-items: center; justify-content: center; font-size: 0.6rem; line-height: 1; }
 .avatar-preview.lg.avatar-broken { font-size: 2rem; }
 .avatar-glyph { color: #fff; }
+.avatar-nudge { display: inline-block; margin-top: 8px; font-size: 0.82rem; font-weight: 700; color: #fff; background: var(--brand); padding: 5px 12px; border-radius: 999px; }
+a.avatar-nudge:hover { background: var(--brand-dark); text-decoration: none; }
 
 /* Share buttons */
 .share { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 0; }

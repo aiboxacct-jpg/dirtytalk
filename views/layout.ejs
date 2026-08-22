@@ -84,6 +84,8 @@ document.addEventListener('click', function (e) {
       var ini = initialOf(el);
       el.textContent = ini || '👤';
       if (!ini) el.classList.add('avatar-glyph');
+      // Photo's gone — nudge the owner to add one.
+      document.querySelectorAll('.avatar-nudge[hidden]').forEach(function (n) { n.hidden = false; });
     };
     probe.src = m[1];
   }

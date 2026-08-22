@@ -4,9 +4,14 @@
   <div class="profile-head">
     <% if (creator.avatar_url) { %>
       <span class="avatar-preview lg" data-initial="<%= (creator.name || '').charAt(0) %>" style="background-image:url('<%= creator.avatar_url %>')"></span>
+    <% } else { %>
+      <span class="avatar-preview lg avatar-broken"><%= (creator.name || '?').charAt(0).toUpperCase() %></span>
     <% } %>
     <h1><%= creator.name %><% if (creator.gender) { %> <span class="gender <%= creator.gender %>" title="<%= creator.gender %>"><%= creator.gender === 'male' ? '♂' : '♀' %></span><% } %><% if (creator.verified) { %> <span class="verified" title="Verified">✔</span><% } %></h1>
   </div>
+  <% if (isOwner) { %>
+    <a class="avatar-nudge" href="/account"<% if (creator.avatar_url) { %> hidden<% } %>>📷 Add a profile photo</a>
+  <% } %>
   <% if (creator.bio) { %><p class="bio"><%= creator.bio %></p><% } %>
 
   <%- include('partials/share', { shareUrl: absUrl('/u/' + (creator.handle || creator.id)), shareTitle: creator.name + ' — come chat with me on ' + siteName + ' 😘', label: 'Share:' }) %>
