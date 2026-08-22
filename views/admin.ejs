@@ -21,12 +21,19 @@
     <div class="dash-label">Locked now<% if (stats.dueScheduled) { %> · <%= stats.dueScheduled %> due soon<% } %></div>
   </div>
 </div>
-<% if (stats.totalOwedCents) { %>
-  <form action="/admin/clear-bill" method="post" class="inline" onsubmit="return confirm('Reset EVERY creator\'s bill to $0? This clears all outstanding site fees and cannot be undone.');" style="margin:-8px 0 20px;">
-    <input type="hidden" name="all" value="1">
-    <button class="btn small muted" type="submit">↺ Reset all bills to $0</button>
+<div class="fee-bar">
+  <form action="/admin/fee" method="post" class="inline fee-form">
+    <label for="fee">Site fee per sale: $</label>
+    <input type="number" id="fee" name="fee" min="0" step="0.01" value="<%= (feeCents / 100).toFixed(2) %>" class="due-input" style="width:80px;">
+    <button class="btn small" type="submit">Save fee</button>
   </form>
-<% } %>
+  <% if (stats.totalOwedCents) { %>
+    <form action="/admin/clear-bill" method="post" class="inline" onsubmit="return confirm('Reset EVERY creator\'s bill to $0? This clears all outstanding site fees and cannot be undone.');">
+      <input type="hidden" name="all" value="1">
+      <button class="btn small muted" type="submit">↺ Reset all bills to $0</button>
+    </form>
+  <% } %>
+</div>
 
 <div class="card">
   <h2 style="margin-top:0;">Add a user</h2>

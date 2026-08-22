@@ -62,6 +62,11 @@ CREATE TABLE IF NOT EXISTS dm_messages (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS settings (
+  key   TEXT PRIMARY KEY,
+  value TEXT
+);
+
 CREATE INDEX IF NOT EXISTS idx_room_id       ON room_messages(id);
 CREATE INDEX IF NOT EXISTS idx_threads_creator ON threads(creator_id);
 CREATE INDEX IF NOT EXISTS idx_threads_guest   ON threads(guest_id);

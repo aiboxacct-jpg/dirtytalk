@@ -178,7 +178,10 @@ textarea { resize: vertical; }
 .pay-btn { background: #1e8e3e; }
 .pay-btn:hover { background: #1a7d36; }
 .pay-note { font-size: 0.82rem; color: #1e8e3e; font-weight: 700; }
+.pay-warn { margin: 6px 0 0; font-size: 0.78rem; color: #8a5300; background: #fff4e5; border: 1px solid #ffc98a; border-radius: 8px; padding: 6px 10px; display: inline-block; }
 .bill-owed { font-weight: 800; color: var(--brand); }
+.fee-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin: -8px 0 20px; }
+.fee-form { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; }
 /* Compact account tabs (Dashboard / Pay your bill) — deliberately low-key */
 .acct-tabs { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin: 12px 0 6px; }
 .tab-bar { display: flex; gap: 6px; }

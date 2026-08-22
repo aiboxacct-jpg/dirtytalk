@@ -61,9 +61,10 @@
         <button type="button" id="pw-add" class="btn small">➕ Add min</button>
       </span>
       <span id="hoststatus" class="host-status"></span>
-      <button type="button" id="pay-received" class="btn small pay-btn" title="Tap when a tip lands — adds the $1 site fee to your bill">💵 Payment received</button>
+      <button type="button" id="pay-received" class="btn small pay-btn" title="Tap when a tip lands — adds the site fee to your bill">💵 Payment received</button>
       <span id="pay-note" class="pay-note" hidden></span>
     </div>
+    <p class="pay-warn">⚠ Only click “Payment received” if you have actually received the payment!</p>
   <% } %>
 
   <div id="typing-ind" class="typing-ind" hidden><%= otherName %> is typing<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span></div>
@@ -195,6 +196,7 @@
   var payBtn = document.getElementById('pay-received');
   var payNote = document.getElementById('pay-note');
   if (payBtn) payBtn.addEventListener('click', async function () {
+    if (!confirm('Only click this if you have received payment!')) return;
     payBtn.disabled = true;
     try {
       var r = await fetch(base + '/payment' + tokenQ, { method: 'POST', headers: { accept: 'application/json' } });

@@ -4,6 +4,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const db = require('../db');
+const { getFeeCents, setFeeCents } = require('../siteconfig');
 
 const router = express.Router();
 
@@ -44,11 +45,24 @@ async function renderDashboard(req, res, error) {
     title: 'Admin',
     users,
     stats: summarize(users),
+    feeCents: await getFeeCents(),
     adminId: req.user.id,
     error: error || null,
     wide: true,
   });
 }
+
+// Change the site-wide per-sale fee (entered in dollars).
+router.post('/fee', async (req, res) => {
+  const dollars = parseFloat(req.body.fee);
+  if (!Number.isFinite(dollars) || dollars < 0) {
+    flash(req, 'error', 'Enter a valid fee amount.');
+    return res.redirect('/admin');
+  }
+  const cents = await setFeeCents(Math.round(dollars * 100));
+  flash(req, 'success', 'Site fee set to $' + (cents / 100).toFixed(2) + ' per sale.');
+  res.redirect('/admin');
+});
 
 // Dashboard
 router.get('/', async (req, res) => {

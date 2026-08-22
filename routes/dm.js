@@ -3,6 +3,7 @@ const express = require('express');
 const crypto = require('crypto');
 const db = require('../db');
 const { tipLinks } = require('../tips');
+const { getFeeCents } = require('../siteconfig');
 const { uploadSingle, uploadImage } = require('../storage');
 
 const router = express.Router();
@@ -374,18 +375,18 @@ router.post('/:id/host', async (req, res) => {
   res.json({ ok: true, paywall });
 });
 
-// --- Creator logs a payment they received (adds the $1 site fee to their tab) -
+// --- Creator logs a payment they received (adds the site fee to their tab) ----
 // Tips happen off-site, so the creator taps this each time one lands. We can't
-// see the amount, so it's a flat $1 per confirmed payment, owed to the platform.
-const SITE_FEE_CENTS = 100;
+// see the amount, so it's a flat per-sale fee (admin-set), owed to the platform.
 router.post('/:id/payment', async (req, res) => {
   const thread = await threadWithCreator(req.params.id);
   if (!thread) return res.status(404).json({ ok: false });
   const acc = access(thread, req);
   if (!acc.isCreator) return res.status(403).json({ ok: false, error: 'Only the host can do that.' });
+  const feeCents = await getFeeCents();
   await db.run(
     'UPDATE users SET bill_cents = bill_cents + ?, sales_count = sales_count + 1 WHERE id = ?',
-    SITE_FEE_CENTS,
+    feeCents,
     req.user.id
   );
   const u = await db.get('SELECT bill_cents, sales_count FROM users WHERE id = ?', req.user.id);
