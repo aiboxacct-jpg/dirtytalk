@@ -218,6 +218,11 @@ button.tip-btn { border: none; cursor: pointer; font-family: inherit; }
 .profile-head h1 { margin: 0; }
 .chip-avatar { display: inline-block; width: 18px; height: 18px; border-radius: 50%; background-size: cover; background-position: center; background-repeat: no-repeat; vertical-align: middle; margin-right: 5px; background-color: #f0ebf5; }
 .rmsg-avatar { display: inline-block; width: 20px; height: 20px; flex: 0 0 auto; border-radius: 50%; background-size: cover; background-position: center; background-repeat: no-repeat; background-color: #f0ebf5; }
+/* Fallback when an avatar photo fails to load — show the initial on a brand circle */
+.avatar-broken { background-color: var(--brand) !important; color: #fff; font-weight: 800; }
+.rmsg-avatar.avatar-broken, .chip-avatar.avatar-broken, .who-avatar.avatar-broken { display: inline-flex; align-items: center; justify-content: center; font-size: 0.6rem; line-height: 1; }
+.avatar-preview.lg.avatar-broken { font-size: 2rem; }
+.avatar-glyph { color: #fff; }
 
 /* Share buttons */
 .share { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 0; }

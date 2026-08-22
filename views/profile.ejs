@@ -3,7 +3,7 @@
 <div class="card profile">
   <div class="profile-head">
     <% if (creator.avatar_url) { %>
-      <span class="avatar-preview lg" style="background-image:url('<%= creator.avatar_url %>')"></span>
+      <span class="avatar-preview lg" data-initial="<%= (creator.name || '').charAt(0) %>" style="background-image:url('<%= creator.avatar_url %>')"></span>
     <% } %>
     <h1><%= creator.name %><% if (creator.gender) { %> <span class="gender <%= creator.gender %>" title="<%= creator.gender %>"><%= creator.gender === 'male' ? '♂' : '♀' %></span><% } %><% if (creator.verified) { %> <span class="verified" title="Verified">✔</span><% } %></h1>
   </div>

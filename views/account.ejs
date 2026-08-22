@@ -44,7 +44,7 @@
   <%- include('partials/share', { shareUrl: absUrl('/u/' + _slug), shareTitle: user.name + ' — come chat with me on ' + siteName + ' 😘', label: 'Share your profile:' }) %>
 
   <div class="avatar-row">
-    <span id="avatar-img" class="avatar-preview" <% if (user.avatar_url) { %>style="background-image:url('<%= user.avatar_url %>')"<% } %>><% if (!user.avatar_url) { %>📷<% } %></span>
+    <span id="avatar-img" class="avatar-preview" data-initial="<%= (user.name || '').charAt(0) %>" <% if (user.avatar_url) { %>style="background-image:url('<%= user.avatar_url %>')"<% } %>><% if (!user.avatar_url) { %>📷<% } %></span>
     <div>
       <button type="button" class="btn small" id="avatar-btn">📷 Upload profile photo</button>
       <input type="file" id="avatar-file" accept="image/*" hidden>

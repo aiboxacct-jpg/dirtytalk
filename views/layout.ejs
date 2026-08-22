@@ -66,4 +66,28 @@ document.addEventListener('click', function (e) {
   });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !lb.hidden) closeLb(); });
 })();
+
+// Avatar fallback: a background-image can't error on its own, so if an avatar's
+// photo fails to load we swap the blank circle for the person's initial.
+(function () {
+  function initialOf(el) {
+    var n = (el.getAttribute('data-initial') || el.getAttribute('title') || '').trim();
+    return n ? n.charAt(0).toUpperCase() : '';
+  }
+  function harden(el) {
+    var m = (el.style.backgroundImage || '').match(/url\(["']?(.*?)["']?\)/);
+    if (!m || !m[1]) return;
+    var probe = new Image();
+    probe.onerror = function () {
+      el.style.backgroundImage = 'none';
+      el.classList.add('avatar-broken');
+      var ini = initialOf(el);
+      el.textContent = ini || '👤';
+      if (!ini) el.classList.add('avatar-glyph');
+    };
+    probe.src = m[1];
+  }
+  document.querySelectorAll('.avatar-preview, .rmsg-avatar, .chip-avatar, .who-avatar').forEach(harden);
+  window.__hardenAvatar = harden; // dynamically-added avatars can opt in
+})();
 </script>

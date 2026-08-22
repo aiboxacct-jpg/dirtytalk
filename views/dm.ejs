@@ -3,7 +3,7 @@
 <div class="card">
   <div class="dm-head">
     <% if (otherAvatar) { %>
-      <span class="avatar-preview" style="background-image:url('<%= otherAvatar %>')"></span>
+      <span class="avatar-preview" data-initial="<%= (otherName || '').charAt(0) %>" style="background-image:url('<%= otherAvatar %>')"></span>
     <% } %>
     <div class="dm-head-info">
       <h1 class="dm-title"><%= otherName %><% if (otherGender) { %> <span class="gender <%= otherGender %>" title="<%= otherGender %>"><%= otherGender === 'male' ? '♂' : '♀' %></span><% } %><% if (otherVerified) { %> <span class="verified" title="Verified">✔</span><% } %></h1>
