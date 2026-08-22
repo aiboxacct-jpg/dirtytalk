@@ -72,15 +72,39 @@ function access(thread, req) {
   return { isCreator, isGuest, ok: isCreator || isGuest };
 }
 
-// Shape messages for the client; `mine` is relative to who's viewing.
-function serializeDm(rows, isCreator) {
-  return rows.map((m) => ({
-    id: m.id,
-    body: m.body,
-    image: m.image_url || null,
-    created_at: m.created_at,
-    mine: m.sender === (isCreator ? 'creator' : 'guest'),
-  }));
+// The creator/guest display info a thread needs to render room-style messages.
+function dmContext(thread, acc) {
+  return {
+    isCreator: acc.isCreator,
+    creatorName: thread.creator_name,
+    creatorAvatar: thread.creator_avatar || null,
+    creatorGender: thread.creator_gender || null,
+    creatorVerified: !!thread.creator_verified,
+    creatorHandle: thread.creator_handle || thread.creator_id,
+    guestName: thread.guest_name || 'Guest',
+  };
+}
+
+// Shape messages for the client, room-style: each carries the sender's avatar,
+// name, gender and verified badge. `mine` is relative to who's viewing.
+function serializeDm(rows, ctx) {
+  return rows.map((m) => {
+    const fromCreator = m.sender === 'creator';
+    const mine = m.sender === (ctx.isCreator ? 'creator' : 'guest');
+    return {
+      id: m.id,
+      body: m.body,
+      image: m.image_url || null,
+      created_at: m.created_at,
+      mine,
+      fromCreator,
+      name: mine ? 'You' : fromCreator ? ctx.creatorName : ctx.guestName,
+      avatar: fromCreator ? ctx.creatorAvatar : null,
+      gender: fromCreator ? ctx.creatorGender : null,
+      verified: fromCreator ? ctx.creatorVerified : false,
+      handle: fromCreator ? ctx.creatorHandle : null,
+    };
+  });
 }
 
 function wantsJson(req) {
@@ -219,7 +243,7 @@ router.get('/:id', async (req, res) => {
   res.render('dm', {
     title: acc.isCreator ? 'Chat with ' + (thread.guest_name || 'Guest') : 'Chat with ' + thread.creator_name,
     thread,
-    messages: serializeDm(messages, acc.isCreator),
+    messages: serializeDm(messages, dmContext(thread, acc)),
     isCreator: acc.isCreator,
     otherName: acc.isCreator ? thread.guest_name || 'Guest' : thread.creator_name,
     // The other party's profile bits — only the creator has these, so they show
@@ -250,7 +274,7 @@ router.get('/:id/feed', async (req, res) => {
   );
   const paywall = await paywallState(thread, acc);
   const typing = isTyping(thread.id, acc.isCreator ? 'guest' : 'creator'); // is the OTHER person typing?
-  res.json({ messages: serializeDm(rows, acc.isCreator), paywall, typing });
+  res.json({ messages: serializeDm(rows, dmContext(thread, acc)), paywall, typing });
 });
 
 // A lightweight "I'm typing" ping (kept in memory, no DB write).

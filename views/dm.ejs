@@ -23,10 +23,22 @@
       <p class="muted" id="dm-empty">No messages yet — say hello 👋</p>
     <% } %>
     <% messages.forEach(function(m){ %>
-      <div class="msg <%= m.mine ? 'mine' : 'them' %>" data-id="<%= m.id %>">
-        <span class="who"><% if (!m.mine && otherAvatar) { %><span class="who-avatar" style="background-image:url('<%= otherAvatar %>')"></span><% } %><%= m.mine ? 'You' : otherName %></span>
+      <div class="rmsg <%= m.mine ? 'mine' : '' %>" data-id="<%= m.id %>">
+        <div class="rmsg-head">
+          <% if (m.avatar) { %>
+            <% if (m.handle && !m.mine) { %><a class="rmsg-avatar" href="/u/<%= m.handle %>" style="background-image:url('<%= m.avatar %>')" title="<%= m.name %>"></a><% } else { %><span class="rmsg-avatar" style="background-image:url('<%= m.avatar %>')"></span><% } %>
+          <% } %>
+          <% if (m.fromCreator && !m.mine && m.handle) { %>
+            <a class="rmsg-name creator" href="/u/<%= m.handle %>"><%= m.name %></a>
+          <% } else { %>
+            <span class="rmsg-name"><%= m.name %></span>
+          <% } %>
+          <% if (m.gender) { %><span class="gender <%= m.gender %>" title="<%= m.gender %>"><%= m.gender === 'male' ? '♂' : '♀' %></span><% } %>
+          <% if (m.verified) { %><span class="verified" title="Verified">✔</span><% } %>
+          <span class="rmsg-time"><%= (m.created_at || '').slice(11, 16) %></span>
+        </div>
         <% if (m.image) { %><a class="chat-img-link" href="<%= m.image %>" target="_blank" rel="noopener"><img class="chat-img" src="<%= m.image %>" alt="shared picture" loading="lazy"></a><% } %>
-        <% if (m.body) { %><p><%= m.body %></p><% } %>
+        <% if (m.body) { %><div class="rmsg-body"><%= m.body %></div><% } %>
       </div>
     <% }); %>
   </div>
@@ -209,17 +221,26 @@
   }
   function addMessage(m) {
     if (empty) { empty.remove(); empty = null; }
-    if (box.querySelector('.msg[data-id="' + m.id + '"]')) return;
-    var wrap = el('div', 'msg ' + (m.mine ? 'mine' : 'them'));
+    if (box.querySelector('.rmsg[data-id="' + m.id + '"]')) return;
+    var wrap = el('div', 'rmsg' + (m.mine ? ' mine' : ''));
     wrap.setAttribute('data-id', m.id);
-    var who = el('span', 'who');
-    if (!m.mine && otherAvatar) {
-      var wav = el('span', 'who-avatar');
-      wav.style.backgroundImage = "url('" + otherAvatar + "')";
-      who.appendChild(wav);
+    var head = el('div', 'rmsg-head');
+    if (m.avatar) {
+      var av;
+      if (m.handle && !m.mine) { av = el('a', 'rmsg-avatar'); av.href = '/u/' + m.handle; av.title = m.name; }
+      else { av = el('span', 'rmsg-avatar'); }
+      av.style.backgroundImage = "url('" + m.avatar + "')";
+      head.appendChild(av);
     }
-    who.appendChild(document.createTextNode(m.mine ? 'You' : otherName));
-    wrap.appendChild(who);
+    if (m.fromCreator && !m.mine && m.handle) {
+      var a = el('a', 'rmsg-name creator', m.name); a.href = '/u/' + m.handle; head.appendChild(a);
+    } else {
+      head.appendChild(el('span', 'rmsg-name', m.name));
+    }
+    if (m.gender) { var g = el('span', 'gender ' + m.gender, m.gender === 'male' ? '♂' : '♀'); g.title = m.gender; head.appendChild(g); }
+    if (m.verified) { var v = el('span', 'verified', '✔'); v.title = 'Verified'; head.appendChild(v); }
+    head.appendChild(el('span', 'rmsg-time', (m.created_at || '').slice(11, 16)));
+    wrap.appendChild(head);
     if (m.image) {
       var link = document.createElement('a');
       link.className = 'chat-img-link'; link.href = m.image; link.target = '_blank'; link.rel = 'noopener';
@@ -229,7 +250,7 @@
       link.appendChild(img);
       wrap.appendChild(link);
     }
-    if (m.body) wrap.appendChild(el('p', null, m.body));
+    if (m.body) wrap.appendChild(el('div', 'rmsg-body', m.body));
     box.appendChild(wrap);
     if (m.id > lastId) lastId = m.id;
   }
