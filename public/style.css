@@ -172,7 +172,7 @@ textarea { resize: vertical; }
 .stat-card { flex: 1 1 140px; background: var(--soft, #faf7fd); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
 .stat-num { font-size: 1.5rem; font-weight: 800; color: var(--brand); line-height: 1.1; }
 .stat-label { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
-.payrow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+#pay-received { margin-left: auto; } /* sits at the right end of the host bar */
 .pay-btn { background: #1e8e3e; }
 .pay-btn:hover { background: #1a7d36; }
 .pay-note { font-size: 0.82rem; color: #1e8e3e; font-weight: 700; }
