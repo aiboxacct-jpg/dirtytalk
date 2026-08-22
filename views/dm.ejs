@@ -196,29 +196,34 @@
     if (!Number.isFinite(m) || m < 1) m = 2;
     hostAction('add', m);
   });
-  // One-time offer: grant the preset minutes once the guest has paid.
+  var payNote = document.getElementById('pay-note');
+  // Record a received payment (bills the site fee). Shared by the "Payment
+  // received" button and the offer grant.
+  async function logPayment() {
+    try {
+      var r = await fetch(base + '/payment' + tokenQ, { method: 'POST', headers: { accept: 'application/json' } });
+      var d = await r.json();
+      if (d.ok && payNote) { payNote.textContent = '✓ Payment logged'; payNote.hidden = false; }
+    } catch (e) {}
+  }
+
+  // One-time offer: grant the preset minutes once the guest has paid (counts
+  // as a received payment too).
   var offerGrant = document.getElementById('offer-grant');
   if (offerGrant) offerGrant.addEventListener('click', function () {
     var m = parseInt(offerGrant.getAttribute('data-min'), 10);
     if (!(m > 0)) return;
-    if (!confirm('Grant ' + m + ' minutes? Only do this once the guest has paid your offer.')) return;
+    if (!confirm('Did you receive the payment for this offer?\n\nGrant ' + m + ' minutes now — click Cancel if this is NOT a real payment.')) return;
     hostAction('add', m);
+    logPayment();
   });
 
-  // Creator logs a received tip → +$1 site fee on their bill.
+  // Creator confirms a received tip → adds the site fee to their bill.
   var payBtn = document.getElementById('pay-received');
-  var payNote = document.getElementById('pay-note');
   if (payBtn) payBtn.addEventListener('click', async function () {
-    if (!confirm('Only click this if you have received payment!')) return;
+    if (!confirm('Did you receive this payment?\n\nClick OK to confirm — click Cancel if this is NOT a real payment.')) return;
     payBtn.disabled = true;
-    try {
-      var r = await fetch(base + '/payment' + tokenQ, { method: 'POST', headers: { accept: 'application/json' } });
-      var d = await r.json();
-      if (d.ok && payNote) {
-        payNote.textContent = '✓ Logged — your bill is now ' + d.bill;
-        payNote.hidden = false;
-      }
-    } catch (e) {}
+    await logPayment();
     payBtn.disabled = false;
   });
 
