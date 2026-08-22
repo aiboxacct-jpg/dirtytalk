@@ -211,12 +211,12 @@ button.tip-btn { border: none; cursor: pointer; font-family: inherit; }
 
 /* Profile photo / avatar */
 .avatar-row { display: flex; align-items: center; gap: 14px; margin: 12px 0 6px; }
-.avatar-preview { width: 64px; height: 64px; flex: 0 0 auto; border-radius: 50%; background-color: #f0ebf5; background-size: cover; background-position: center; display: inline-flex; align-items: center; justify-content: center; font-size: 1.5rem; border: 1px solid var(--line); }
+.avatar-preview { width: 64px; height: 64px; flex: 0 0 auto; border-radius: 50%; background-color: #f0ebf5; background-size: cover; background-position: center; background-repeat: no-repeat; display: inline-flex; align-items: center; justify-content: center; font-size: 1.5rem; border: 1px solid var(--line); overflow: hidden; }
 .avatar-preview.lg { width: 84px; height: 84px; }
 .profile-head { display: flex; align-items: center; gap: 14px; }
 .profile-head h1 { margin: 0; }
-.chip-avatar { display: inline-block; width: 18px; height: 18px; border-radius: 50%; background-size: cover; background-position: center; vertical-align: middle; margin-right: 5px; background-color: #f0ebf5; }
-.rmsg-avatar { display: inline-block; width: 20px; height: 20px; flex: 0 0 auto; border-radius: 50%; background-size: cover; background-position: center; background-color: #f0ebf5; }
+.chip-avatar { display: inline-block; width: 18px; height: 18px; border-radius: 50%; background-size: cover; background-position: center; background-repeat: no-repeat; vertical-align: middle; margin-right: 5px; background-color: #f0ebf5; }
+.rmsg-avatar { display: inline-block; width: 20px; height: 20px; flex: 0 0 auto; border-radius: 50%; background-size: cover; background-position: center; background-repeat: no-repeat; background-color: #f0ebf5; }
 
 /* Share buttons */
 .share { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 0; }
