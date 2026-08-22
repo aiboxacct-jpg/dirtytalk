@@ -102,17 +102,17 @@ router.post('/message', async (req, res) => {
   if (!thread) {
     const token = crypto.randomBytes(16).toString('hex');
     const info = await db.run(
-      `INSERT INTO threads (creator_id, guest_id, guest_user_id, guest_name, token, paywall_on, last_at)
-       VALUES (?, NULL, ?, ?, ?, 0, datetime('now'))`,
+      `INSERT INTO threads (creator_id, guest_id, guest_user_id, guest_name, token, paywall_on, admin_dm, last_at)
+       VALUES (?, NULL, ?, ?, ?, 0, 1, datetime('now'))`,
       creatorId,
       req.user.id,
       req.user.name,
       token
     );
     thread = { id: Number(info.lastInsertRowid) };
-  } else if (thread.paywall_on !== 0) {
-    // Existing thread: make sure the admin isn't paywalled.
-    await db.run('UPDATE threads SET paywall_on = 0 WHERE id = ?', thread.id);
+  } else {
+    // Existing thread: make sure the admin isn't paywalled and it's flagged.
+    await db.run('UPDATE threads SET paywall_on = 0, admin_dm = 1 WHERE id = ?', thread.id);
   }
   res.redirect('/dm/' + thread.id);
 });

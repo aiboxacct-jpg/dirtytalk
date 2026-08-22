@@ -134,6 +134,8 @@ async function migrate() {
     // Admin-set bill due date (YYYY-MM-DD). On/after this day the creator's
     // account is locked until they pay. Empty/null = no due date, never locked.
     'ALTER TABLE users ADD COLUMN due_date TEXT',
+    // Marks a thread the admin started from the dashboard (labeled "admin DM").
+    'ALTER TABLE threads ADD COLUMN admin_dm INTEGER NOT NULL DEFAULT 0',
   ];
   for (const sql of stmts) {
     try {

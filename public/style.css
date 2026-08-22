@@ -288,6 +288,7 @@ a.avatar-nudge:hover { background: var(--brand-dark); text-decoration: none; }
 .list-name { font-weight: 700; }
 .list-sub { display: block; color: var(--muted); font-size: 0.86rem; }
 .tag { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.04em; background: #efeafc; color: var(--accent); padding: 1px 7px; border-radius: 6px; font-weight: 700; }
+.tag.admin-dm { background: var(--accent); color: #fff; }
 
 /* Unread badge on the Messages nav link — hidden until there are unread messages */
 .nav-badge { display: none; min-width: 18px; height: 18px; line-height: 18px; padding: 0 5px; text-align: center; font-size: 0.7rem; font-weight: 800; color: #fff; background: var(--brand); border-radius: 999px; vertical-align: middle; }

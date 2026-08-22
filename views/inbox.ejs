@@ -7,7 +7,7 @@
   <div class="card list">
     <% threads.forEach(function(t){ %>
       <a class="list-row" href="<%= t.link %>">
-        <span class="list-name"><%= t.other %><% if (t.iamCreator) { %> <span class="tag">private</span><% } %></span>
+        <span class="list-name"><%= t.other %><% if (t.admin_dm) { %> <span class="tag admin-dm">admin DM</span><% } else if (t.iamCreator) { %> <span class="tag">private</span><% } %></span>
         <span class="list-sub"><%= (t.last_body || '').slice(0, 60) %></span>
       </a>
     <% }); %>
