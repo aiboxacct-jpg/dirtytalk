@@ -21,6 +21,12 @@
     <div class="dash-label">Locked now<% if (stats.dueScheduled) { %> · <%= stats.dueScheduled %> due soon<% } %></div>
   </div>
 </div>
+<% if (stats.totalOwedCents) { %>
+  <form action="/admin/clear-bill" method="post" class="inline" onsubmit="return confirm('Reset EVERY creator\'s bill to $0? This clears all outstanding site fees and cannot be undone.');" style="margin:-8px 0 20px;">
+    <input type="hidden" name="all" value="1">
+    <button class="btn small muted" type="submit">↺ Reset all bills to $0</button>
+  </form>
+<% } %>
 
 <div class="card">
   <h2 style="margin-top:0;">Add a user</h2>
@@ -54,7 +60,13 @@
             </form>
           </td>
           <td<% if (u.bill_cents) { %> class="bill-owed"<% } else { %> class="muted"<% } %>>
-            <%= '$' + ((u.bill_cents || 0) / 100).toFixed(2) %><% if (u.sales_count) { %> <span class="muted">(<%= u.sales_count %>)</span><% } %>
+            <span class="bill-amt"><%= '$' + ((u.bill_cents || 0) / 100).toFixed(2) %><% if (u.sales_count) { %> <span class="muted">(<%= u.sales_count %>)</span><% } %></span>
+            <% if (u.bill_cents) { %>
+              <form action="/admin/clear-bill" method="post" class="inline" onsubmit="return confirm('Clear <%= u.name.replace(/'/g, "\\'") %>\'s bill to $0?');">
+                <input type="hidden" name="user_id" value="<%= u.id %>">
+                <button class="btn small muted" type="submit" title="Mark as paid — set bill to $0">Clear</button>
+              </form>
+            <% } %>
           </td>
           <td>
             <% var locked = u.due_date && today >= u.due_date; %>

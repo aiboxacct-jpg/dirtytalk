@@ -128,6 +128,20 @@ router.post('/due', async (req, res) => {
   res.redirect('/admin');
 });
 
+// Clear a creator's bill (they paid) — zero the owed amount and sale count.
+// all=1 resets everyone's bill to $0 at once.
+router.post('/clear-bill', async (req, res) => {
+  if (req.body.all === '1') {
+    await db.run('UPDATE users SET bill_cents = 0, sales_count = 0');
+    flash(req, 'success', 'All bills reset to $0.');
+    return res.redirect('/admin');
+  }
+  const id = Number(req.body.user_id);
+  await db.run('UPDATE users SET bill_cents = 0, sales_count = 0 WHERE id = ?', id);
+  flash(req, 'success', 'Bill cleared to $0.');
+  res.redirect('/admin');
+});
+
 // Delete a user (cascades their private chats)
 router.post('/delete', async (req, res) => {
   const id = Number(req.body.user_id);
