@@ -35,6 +35,23 @@ function typingNames(exceptKey) {
   return names;
 }
 
+// Live guest presence (anonymous visitors, keyed by their gid cookie). In
+// memory, refreshed as they poll the room; counts those seen very recently.
+const GUEST_WINDOW = 45000;
+const guestSeen = new Map();
+function markGuest(req) {
+  if (!req.user && req.gid) guestSeen.set(req.gid, Date.now());
+}
+function guestCount(exceptGid) {
+  const now = Date.now();
+  let n = 0;
+  for (const [gid, t] of guestSeen) {
+    if (now - t > GUEST_WINDOW) { guestSeen.delete(gid); continue; } // sweep stale
+    if (gid !== exceptGid) n++;
+  }
+  return n;
+}
+
 function nickFor(req) {
   return 'guest-' + String(req.gid || 'anon').slice(0, 4);
 }
@@ -74,6 +91,7 @@ router.get('/', async (req, res) => {
       ORDER BY gm.id DESC LIMIT 100`
   );
   rows.reverse();
+  markGuest(req);
   // "Here now" = creators actually active in the last 5 minutes. Their online_at
   // refreshes (~every minute) while they have the site open; it stops when they
   // log out or close the tab, so they drop off the list.
@@ -84,6 +102,7 @@ router.get('/', async (req, res) => {
     title: 'Room',
     messages: serialize(rows, req),
     creators,
+    guests: guestCount(req.gid),
     suggestedName: req.user ? req.user.name : nickFor(req),
     isGuest: !req.user,
   });
@@ -98,7 +117,8 @@ router.get('/feed', async (req, res) => {
       WHERE gm.id > ? ORDER BY gm.id LIMIT 200`,
     after
   );
-  res.json({ messages: serialize(rows, req), typing: typingNames(keyFor(req)) });
+  markGuest(req);
+  res.json({ messages: serialize(rows, req), typing: typingNames(keyFor(req)), guests: guestCount(req.gid) });
 });
 
 // Lightweight "I'm typing" ping (in memory, no DB write).

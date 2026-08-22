@@ -80,6 +80,7 @@ textarea { resize: vertical; }
 .strip-label { color: var(--muted); font-size: 0.82rem; font-weight: 600; }
 .creator-chip { background: #fbe9f2; color: var(--brand-dark); padding: 4px 12px; border-radius: 999px; font-size: 0.85rem; font-weight: 600; }
 .creator-chip:hover { background: #f6d6e7; text-decoration: none; }
+.guest-chip { display: inline-flex; align-items: center; gap: 4px; background: #efeafc; color: var(--muted); padding: 4px 12px; border-radius: 999px; font-size: 0.82rem; font-weight: 600; white-space: nowrap; }
 
 .room-box { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; margin: 12px 0; }
 .room-msgs { height: 54vh; min-height: 320px; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
@@ -329,7 +330,7 @@ a.avatar-nudge:hover { background: var(--brand-dark); text-decoration: none; }
   /* "Here now" — one swipeable row instead of wrapping to many lines */
   .creators-strip { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; gap: 6px; margin: 8px 0; scrollbar-width: none; }
   .creators-strip::-webkit-scrollbar { display: none; }
-  .strip-label, .creator-chip { flex: 0 0 auto; }
+  .strip-label, .creator-chip, .guest-chip { flex: 0 0 auto; }
 
   /* Chat fills the screen with the composer visible → single scroll region */
   .room-box { margin: 8px 0; }

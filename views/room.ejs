@@ -10,14 +10,13 @@
   </div>
 <% } %>
 
-<% if (creators.length) { %>
-  <div class="creators-strip">
-    <span class="strip-label">Here now:</span>
-    <% creators.forEach(function(c){ %>
-      <a class="creator-chip" href="/u/<%= c.handle || c.id %>"><% if (c.avatar_url) { %><span class="chip-avatar" style="background-image:url('<%= c.avatar_url %>')"></span><% } %><%= c.name %><% if (c.gender) { %> <span class="gender <%= c.gender %>"><%= c.gender === 'male' ? '♂' : '♀' %></span><% } %><% if (c.verified) { %> <span class="verified" title="Verified">✔</span><% } %></a>
-    <% }); %>
-  </div>
-<% } %>
+<div class="creators-strip" id="here-now"<% if (!creators.length && !guests) { %> hidden<% } %>>
+  <span class="strip-label">Here now:</span>
+  <% creators.forEach(function(c){ %>
+    <a class="creator-chip" href="/u/<%= c.handle || c.id %>"><% if (c.avatar_url) { %><span class="chip-avatar" style="background-image:url('<%= c.avatar_url %>')"></span><% } %><%= c.name %><% if (c.gender) { %> <span class="gender <%= c.gender %>"><%= c.gender === 'male' ? '♂' : '♀' %></span><% } %><% if (c.verified) { %> <span class="verified" title="Verified">✔</span><% } %></a>
+  <% }); %>
+  <span class="guest-chip" id="guest-chip"<% if (!guests) { %> hidden<% } %>>👀 <span id="guest-count"><%= guests %></span> guest<span id="guest-plural"><%= guests === 1 ? '' : 's' %></span></span>
+</div>
 
 <div class="room-box">
   <div id="room-msgs" class="room-msgs">
@@ -89,6 +88,16 @@
       body: p,
     }).catch(function () {});
   });
+
+  function updateGuests(n) {
+    var chip = document.getElementById('guest-chip');
+    if (!chip) return;
+    document.getElementById('guest-count').textContent = n;
+    document.getElementById('guest-plural').textContent = n === 1 ? '' : 's';
+    chip.hidden = !n;
+    var strip = document.getElementById('here-now');
+    if (strip && n) strip.hidden = false; // guests showed up — reveal the strip
+  }
 
   function renderTyping(names) {
     if (!typingEl) return;
@@ -180,6 +189,7 @@
       var data = await r.json();
       if (data.messages && data.messages.length) { data.messages.forEach(addMessage); scrollIfNeeded(); }
       renderTyping(data.typing);
+      if (typeof data.guests === 'number') updateGuests(data.guests);
     } catch (e) {}
   }
   setInterval(poll, 4000);
