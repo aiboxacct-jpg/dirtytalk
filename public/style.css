@@ -122,6 +122,7 @@ textarea { resize: vertical; }
 .admin-table .mono { white-space: normal; word-break: break-word; } /* email wraps on narrow widths instead of forcing a scrollbar */
 .inline { display: inline; margin: 0; }
 .btn.danger { background: var(--danger); color: #fff; }
+.danger-zone { border: 1px solid #f2c2c2; margin-top: 16px; }
 .btn.danger:hover { background: #b83a3a; }
 .rmsg-body { background: #f4eff8; border-radius: 12px; padding: 8px 12px; display: inline-block; margin-top: 2px; word-break: break-word; }
 .rmsg.mine .rmsg-body { background: #fbe4ef; }

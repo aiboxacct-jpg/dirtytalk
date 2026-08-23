@@ -127,6 +127,17 @@ router.post('/account', requireLogin, async (req, res) => {
   res.redirect('/account');
 });
 
+// Permanently delete the signed-in user's own account (and, by cascade, their
+// private chats). Their room posts stay but go anonymous (user_id -> NULL).
+router.post('/account/delete', requireLogin, async (req, res) => {
+  const user = req.user;
+  if (user.avatar_url) deleteImage(user.avatar_url); // best-effort image cleanup
+  await db.run('DELETE FROM users WHERE id = ?', user.id);
+  req.session.userId = null; // log out
+  flash(req, 'success', 'Your account has been permanently deleted.');
+  res.redirect('/');
+});
+
 // Upload / change the profile photo (ajax)
 router.post('/account/avatar', requireLogin, uploadSingle('image'), async (req, res) => {
   if (!req.file) return res.status(400).json({ ok: false, error: 'No image selected.' });

@@ -108,6 +108,14 @@
   </form>
 </div>
 
+<div class="card narrow danger-zone">
+  <h2 style="margin-top:0;">Delete account</h2>
+  <p class="hint">Permanently delete your account, profile, and private chats. Your room messages stay but become anonymous. <strong>This cannot be undone.</strong></p>
+  <form action="/account/delete" method="post" onsubmit="return confirm('Delete your account permanently?\n\nThis erases your profile and all your private chats and cannot be undone.');">
+    <button class="btn danger" type="submit">Delete my account</button>
+  </form>
+</div>
+
 <script>
 (function () {
   // Dashboard / Pay-your-bill tabs
