@@ -41,11 +41,8 @@
         <% if (m.image) { %>
           <a class="chat-img-link" href="<%= m.image %>" target="_blank" rel="noopener"><img class="chat-img" src="<%= m.image %>" alt="shared picture" loading="lazy"></a>
         <% } %>
-        <% if (m.body) { %><div class="rmsg-body"><%= m.body %></div><% } %>
-        <div class="rmsg-actions">
-          <button type="button" class="rmsg-reply" data-id="<%= m.id %>" data-name="<%= m.name %>">↩ Reply</button>
-          <% if (m.creatorId && !m.mine) { %><a class="rmsg-dm" href="/u/<%= m.creatorHandle %>#tip">💬 Click Here To Chat Privately</a><% } %>
-        </div>
+        <% if (m.body) { %><div class="rmsg-body"><%= m.body %><button type="button" class="rmsg-reply" data-id="<%= m.id %>" data-name="<%= m.name %>">↩ Reply</button></div><% } else { %><button type="button" class="rmsg-reply solo" data-id="<%= m.id %>" data-name="<%= m.name %>">↩ Reply</button><% } %>
+        <% if (m.creatorId && !m.mine) { %><a class="rmsg-dm" href="/u/<%= m.creatorHandle %>#tip">💬 Click Here To Chat Privately</a><% } %>
       </div>
     <% }); %>
   </div>
@@ -203,17 +200,21 @@
       link.appendChild(img);
       wrap.appendChild(link);
     }
-    if (m.body) wrap.appendChild(el('div', 'rmsg-body', m.body));
-    var actions = el('div', 'rmsg-actions');
     var rbtn = el('button', 'rmsg-reply', '↩ Reply');
     rbtn.type = 'button'; rbtn.setAttribute('data-id', m.id); rbtn.setAttribute('data-name', m.name);
-    actions.appendChild(rbtn);
+    if (m.body) {
+      var bodyEl = el('div', 'rmsg-body', m.body);
+      bodyEl.appendChild(rbtn); // reply lives inside the bubble
+      wrap.appendChild(bodyEl);
+    } else {
+      rbtn.className = 'rmsg-reply solo';
+      wrap.appendChild(rbtn);
+    }
     if (m.creatorId && !m.mine) {
       var dm = el('a', 'rmsg-dm', '💬 Click Here To Chat Privately');
       dm.href = '/u/' + m.creatorHandle + '#tip';
-      actions.appendChild(dm);
+      wrap.appendChild(dm);
     }
-    wrap.appendChild(actions);
     box.appendChild(wrap);
     if (m.id > lastId) lastId = m.id;
   }

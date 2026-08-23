@@ -91,15 +91,14 @@ textarea { resize: vertical; }
 .rmsg-name { font-weight: 700; color: var(--ink); }
 .rmsg-name.creator { color: var(--brand-dark); }
 .rmsg-quote { font-size: 0.75rem; color: var(--muted); background: #efeafc; border-left: 3px solid var(--accent); border-radius: 6px; padding: 3px 8px; margin-bottom: 3px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.rmsg-actions { display: flex; align-items: center; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
-.rmsg.mine .rmsg-actions { justify-content: flex-end; }
-.rmsg-reply { border: none; background: none; color: var(--accent); font-weight: 700; font-size: 0.72rem; cursor: pointer; padding: 0; }
-.rmsg-reply:hover { text-decoration: underline; }
+.rmsg-reply { border: none; background: none; color: var(--muted); font-weight: 600; font-size: 0.66rem; cursor: pointer; padding: 0; margin-left: 8px; vertical-align: baseline; }
+.rmsg-reply:hover { text-decoration: underline; color: var(--accent); }
+.rmsg-reply.solo { display: inline-block; margin: 4px 0 0; }
 .reply-ctx { display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--ink); background: #efeafc; border-radius: 8px; padding: 5px 10px; margin: 6px 0 -2px; }
 .reply-ctx button { margin-left: auto; border: none; background: none; color: var(--muted); cursor: pointer; font-size: 0.9rem; line-height: 1; }
 .reply-toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px); background: var(--brand); color: #fff; font-weight: 700; font-size: 0.9rem; padding: 10px 16px; border-radius: 999px; box-shadow: 0 6px 20px rgba(0,0,0,0.22); cursor: pointer; opacity: 0; transition: opacity 0.25s, transform 0.25s; z-index: 60; }
 .reply-toast.show { opacity: 1; transform: translate(-50%, 0); }
-.rmsg-dm { display: inline-block; margin-top: 5px; font-size: 0.68rem; font-weight: 700; color: #fff; background: var(--brand); padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+.rmsg-dm { display: inline-block; margin-top: 5px; font-size: 0.6rem; font-weight: 700; color: #fff; background: var(--brand); padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
 .rmsg-dm:hover { background: var(--brand-dark); text-decoration: none; }
 .rmsg-del { border: none; background: none; color: var(--danger); cursor: pointer; font-size: 0.72rem; padding: 0 2px; line-height: 1; }
 .rmsg-del:hover { color: #a52020; }
