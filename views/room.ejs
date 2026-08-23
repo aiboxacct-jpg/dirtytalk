@@ -35,6 +35,7 @@
           <% } %>
           <% if (m.gender) { %><span class="gender <%= m.gender %>" title="<%= m.gender %>"><%= m.gender === 'male' ? '♂' : '♀' %></span><% } %>
           <% if (m.verified) { %><span class="verified" title="Verified">✔</span><% } %>
+          <% if (m.creatorId && !m.mine) { %><a class="rmsg-dm" href="/u/<%= m.creatorHandle %>#tip">💬 Click Here To Chat Privately</a><% } %>
           <span class="rmsg-time"><%= (m.created_at || '').slice(11,16) %></span>
           <% if (isAdmin) { %><button type="button" class="rmsg-del" data-id="<%= m.id %>" title="Delete">✕</button><% } %>
         </div>
@@ -42,7 +43,6 @@
           <a class="chat-img-link" href="<%= m.image %>" target="_blank" rel="noopener"><img class="chat-img" src="<%= m.image %>" alt="shared picture" loading="lazy"></a>
         <% } %>
         <% if (m.body) { %><div class="rmsg-body"><%= m.body %><button type="button" class="rmsg-reply" data-id="<%= m.id %>" data-name="<%= m.name %>">↩ Reply</button></div><% } else { %><button type="button" class="rmsg-reply solo" data-id="<%= m.id %>" data-name="<%= m.name %>">↩ Reply</button><% } %>
-        <% if (m.creatorId && !m.mine) { %><a class="rmsg-dm" href="/u/<%= m.creatorHandle %>#tip">💬 Click Here To Chat Privately</a><% } %>
       </div>
     <% }); %>
   </div>
@@ -182,6 +182,11 @@
     }
     if (m.gender) { var g = el('span', 'gender ' + m.gender, m.gender === 'male' ? '♂' : '♀'); g.title = m.gender; head.appendChild(g); }
     if (m.verified) { var v = el('span', 'verified', '✔'); v.title = 'Verified'; head.appendChild(v); }
+    if (m.creatorId && !m.mine) {
+      var dm = el('a', 'rmsg-dm', '💬 Click Here To Chat Privately');
+      dm.href = '/u/' + m.creatorHandle + '#tip';
+      head.appendChild(dm); // next to the username
+    }
     head.appendChild(el('span', 'rmsg-time', (m.created_at || '').slice(11, 16)));
     if (isAdmin) {
       var del = el('button', 'rmsg-del', '✕');
@@ -209,11 +214,6 @@
     } else {
       rbtn.className = 'rmsg-reply solo';
       wrap.appendChild(rbtn);
-    }
-    if (m.creatorId && !m.mine) {
-      var dm = el('a', 'rmsg-dm', '💬 Click Here To Chat Privately');
-      dm.href = '/u/' + m.creatorHandle + '#tip';
-      wrap.appendChild(dm);
     }
     box.appendChild(wrap);
     if (m.id > lastId) lastId = m.id;
