@@ -25,6 +25,7 @@
     <% } %>
     <% messages.forEach(function(m){ %>
       <div class="rmsg <%= m.mine ? 'mine' : '' %>" data-id="<%= m.id %>">
+        <% if (m.replyTo) { %><div class="rmsg-quote">↩ <%= m.replyName %>: <%= m.replySnippet %></div><% } %>
         <div class="rmsg-head">
           <% if (m.avatar) { %><a class="rmsg-avatar" href="/u/<%= m.creatorHandle %>" style="background-image:url('<%= m.avatar %>')" title="<%= m.name %>"></a><% } %>
           <% if (m.creatorId && !m.mine) { %>
@@ -41,12 +42,20 @@
           <a class="chat-img-link" href="<%= m.image %>" target="_blank" rel="noopener"><img class="chat-img" src="<%= m.image %>" alt="shared picture" loading="lazy"></a>
         <% } %>
         <% if (m.body) { %><div class="rmsg-body"><%= m.body %></div><% } %>
-        <% if (m.creatorId && !m.mine) { %><a class="rmsg-dm" href="/u/<%= m.creatorHandle %>#tip">💬 Click Here To Chat Privately</a><% } %>
+        <div class="rmsg-actions">
+          <button type="button" class="rmsg-reply" data-id="<%= m.id %>" data-name="<%= m.name %>">↩ Reply</button>
+          <% if (m.creatorId && !m.mine) { %><a class="rmsg-dm" href="/u/<%= m.creatorHandle %>#tip">💬 Click Here To Chat Privately</a><% } %>
+        </div>
       </div>
     <% }); %>
   </div>
 
   <div id="room-typing" class="typing-ind" hidden></div>
+
+  <div id="reply-ctx" class="reply-ctx" hidden>
+    ↩ Replying to <strong id="reply-ctx-name"></strong>
+    <button type="button" id="reply-cancel" title="Cancel reply">✕</button>
+  </div>
 
   <form id="room-form" class="room-form" action="/room" method="post">
     <% if (isGuest) { %>
@@ -73,6 +82,20 @@
   var nameInput = document.getElementById('room-name');
   var typingEl = document.getElementById('room-typing');
   var empty = document.getElementById('room-empty');
+
+  // --- Reply system: tap "Reply" on a message to answer it (and notify them) --
+  var replyTo = null;
+  var replyCtx = document.getElementById('reply-ctx');
+  var replyCtxName = document.getElementById('reply-ctx-name');
+  function setReply(id, name) {
+    replyTo = id;
+    if (replyCtxName) replyCtxName.textContent = name || 'them';
+    if (replyCtx) replyCtx.hidden = false;
+    input.focus();
+  }
+  function clearReply() { replyTo = null; if (replyCtx) replyCtx.hidden = true; }
+  var replyCancel = document.getElementById('reply-cancel');
+  if (replyCancel) replyCancel.addEventListener('click', clearReply);
 
   // Tell the room we're typing (throttled to once every ~2.5s).
   var lastTypingPing = 0;
@@ -124,6 +147,12 @@
   box.addEventListener('scroll', function () {
     atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 40;
   });
+  // "Reply" buttons (server-rendered or live) start a reply to that message.
+  box.addEventListener('click', function (e) {
+    var b = e.target.closest('.rmsg-reply');
+    if (!b) return;
+    setReply(b.getAttribute('data-id'), b.getAttribute('data-name'));
+  });
   function scrollIfNeeded() { if (atBottom) box.scrollTop = box.scrollHeight; }
   scrollIfNeeded();
 
@@ -138,6 +167,7 @@
     if (box.querySelector('.rmsg[data-id="' + m.id + '"]')) return;
     var wrap = el('div', 'rmsg' + (m.mine ? ' mine' : ''));
     wrap.setAttribute('data-id', m.id);
+    if (m.replyTo) wrap.appendChild(el('div', 'rmsg-quote', '↩ ' + (m.replyName || '') + ': ' + (m.replySnippet || '')));
     var head = el('div', 'rmsg-head');
     if (m.avatar) {
       var av = el('a', 'rmsg-avatar');
@@ -174,20 +204,43 @@
       wrap.appendChild(link);
     }
     if (m.body) wrap.appendChild(el('div', 'rmsg-body', m.body));
+    var actions = el('div', 'rmsg-actions');
+    var rbtn = el('button', 'rmsg-reply', '↩ Reply');
+    rbtn.type = 'button'; rbtn.setAttribute('data-id', m.id); rbtn.setAttribute('data-name', m.name);
+    actions.appendChild(rbtn);
     if (m.creatorId && !m.mine) {
       var dm = el('a', 'rmsg-dm', '💬 Click Here To Chat Privately');
       dm.href = '/u/' + m.creatorHandle + '#tip';
-      wrap.appendChild(dm);
+      actions.appendChild(dm);
     }
+    wrap.appendChild(actions);
     box.appendChild(wrap);
     if (m.id > lastId) lastId = m.id;
+  }
+
+  function notifyReply(m) {
+    var t = el('div', 'reply-toast', '↩ ' + (m.name || 'Someone') + ' replied to you');
+    t.addEventListener('click', function () {
+      var target = box.querySelector('.rmsg[data-id="' + m.id + '"]');
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      t.remove();
+    });
+    document.body.appendChild(t);
+    setTimeout(function () { t.classList.add('show'); }, 20); // fade in (rAF-free: works when backgrounded)
+    setTimeout(function () { t.classList.remove('show'); setTimeout(function () { t.remove(); }, 300); }, 5000);
   }
 
   async function poll() {
     try {
       var r = await fetch('/feed?after=' + lastId, { headers: { accept: 'application/json' } });
       var data = await r.json();
-      if (data.messages && data.messages.length) { data.messages.forEach(addMessage); scrollIfNeeded(); }
+      if (data.messages && data.messages.length) {
+        data.messages.forEach(function (m) {
+          addMessage(m);
+          if (m.replyToMe && !m.mine) notifyReply(m); // someone answered your message
+        });
+        scrollIfNeeded();
+      }
       renderTyping(data.typing);
       if (typeof data.guests === 'number') updateGuests(data.guests);
     } catch (e) {}
@@ -201,7 +254,9 @@
     var params = new URLSearchParams();
     params.set('body', body);
     if (nameInput) params.set('name', nameInput.value);
+    if (replyTo) params.set('reply_to', replyTo);
     input.value = '';
+    clearReply();
     try {
       var r = await fetch('/room', {
         method: 'POST',
@@ -224,6 +279,8 @@
     var fd = new FormData();
     fd.append('image', file);
     if (nameInput) fd.append('name', nameInput.value);
+    if (replyTo) fd.append('reply_to', replyTo);
+    clearReply();
     photoBtn.disabled = true;
     var orig = photoBtn.textContent; photoBtn.textContent = '⏳';
     try {

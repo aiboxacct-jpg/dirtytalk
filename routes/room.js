@@ -61,34 +61,63 @@ function displayName(req, provided) {
   return n || nickFor(req);
 }
 function serialize(rows, req) {
-  return rows.map((m) => ({
-    id: m.id,
-    name: m.name,
-    body: m.body,
-    image: m.image_url || null,
-    created_at: m.created_at,
-    // set => a signed-up creator you can DM + tip. Buyers post in the room but
-    // aren't creators, so they get no "Chat Privately" CTA.
-    creatorId: m.creator_is_buyer ? null : m.user_id || null,
-    creatorHandle: m.creator_handle || m.user_id, // pretty URL slug
-    avatar: m.creator_is_buyer ? null : m.creator_avatar || null,
-    gender: m.creator_gender || null,
-    verified: !!m.creator_verified,
-    mine:
-      (!!req.user && m.user_id === req.user.id) ||
-      (!req.user && !!m.gid && m.gid === req.gid),
-  }));
+  return rows.map((m) => {
+    const replySnippet = m.reply_to
+      ? String(m.reply_body || (m.reply_image ? '📷 Photo' : '')).slice(0, 60)
+      : null;
+    return {
+      id: m.id,
+      name: m.name,
+      body: m.body,
+      image: m.image_url || null,
+      created_at: m.created_at,
+      // set => a signed-up creator you can DM + tip. Buyers post in the room but
+      // aren't creators, so they get no "Chat Privately" CTA.
+      creatorId: m.creator_is_buyer ? null : m.user_id || null,
+      creatorHandle: m.creator_handle || m.user_id, // pretty URL slug
+      avatar: m.creator_is_buyer ? null : m.creator_avatar || null,
+      gender: m.creator_gender || null,
+      verified: !!m.creator_verified,
+      mine:
+        (!!req.user && m.user_id === req.user.id) ||
+        (!req.user && !!m.gid && m.gid === req.gid),
+      // Reply context (quotes the message this one is replying to).
+      replyTo: m.reply_to || null,
+      replyName: m.reply_to ? m.reply_name || 'Someone' : null,
+      replySnippet,
+      // Does this reply target the viewer's own message? (drives the "you got a
+      // reply" notification).
+      replyToMe: !!(
+        m.reply_to &&
+        ((!!req.user && m.reply_user_id === req.user.id) ||
+          (!req.user && !!m.reply_gid && m.reply_gid === req.gid))
+      ),
+    };
+  });
 }
 function wantsJson(req) {
   return (req.get('accept') || '').includes('application/json');
 }
+function replyToOf(req) {
+  const n = parseInt(req.body.reply_to, 10);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+// Shared columns + joins for a room message: its creator info and the message
+// it replies to (p.*).
+const MSG_COLS = `gm.*,
+  u.verified AS creator_verified, u.handle AS creator_handle, u.avatar_url AS creator_avatar,
+  u.gender AS creator_gender, u.is_buyer AS creator_is_buyer,
+  p.name AS reply_name, p.body AS reply_body, p.image_url AS reply_image,
+  p.user_id AS reply_user_id, p.gid AS reply_gid`;
+const MSG_JOINS = `FROM room_messages gm
+  LEFT JOIN users u ON u.id = gm.user_id
+  LEFT JOIN room_messages p ON p.id = gm.reply_to`;
 
 // Room page
 router.get('/', async (req, res) => {
   const rows = await db.all(
-    `SELECT gm.*, u.verified AS creator_verified, u.handle AS creator_handle, u.avatar_url AS creator_avatar, u.gender AS creator_gender, u.is_buyer AS creator_is_buyer
-       FROM room_messages gm LEFT JOIN users u ON u.id = gm.user_id
-      ORDER BY gm.id DESC LIMIT 100`
+    `SELECT ${MSG_COLS} ${MSG_JOINS} ORDER BY gm.id DESC LIMIT 100`
   );
   rows.reverse();
   markGuest(req);
@@ -112,9 +141,7 @@ router.get('/', async (req, res) => {
 router.get('/feed', async (req, res) => {
   const after = Number(req.query.after) || 0;
   const rows = await db.all(
-    `SELECT gm.*, u.verified AS creator_verified, u.handle AS creator_handle, u.avatar_url AS creator_avatar, u.gender AS creator_gender, u.is_buyer AS creator_is_buyer
-       FROM room_messages gm LEFT JOIN users u ON u.id = gm.user_id
-      WHERE gm.id > ? ORDER BY gm.id LIMIT 200`,
+    `SELECT ${MSG_COLS} ${MSG_JOINS} WHERE gm.id > ? ORDER BY gm.id LIMIT 200`,
     after
   );
   markGuest(req);
@@ -144,14 +171,15 @@ router.post('/room', async (req, res) => {
   clearTyping(req); // they just sent — no longer typing
 
   const info = await db.run(
-    'INSERT INTO room_messages (user_id, gid, name, body) VALUES (?, ?, ?, ?)',
+    'INSERT INTO room_messages (user_id, gid, name, body, reply_to) VALUES (?, ?, ?, ?, ?)',
     req.user ? req.user.id : null,
     req.user ? null : req.gid,
     name,
-    body
+    body,
+    replyToOf(req)
   );
   if (json) {
-    const m = await db.get('SELECT gm.*, u.verified AS creator_verified, u.handle AS creator_handle, u.avatar_url AS creator_avatar, u.gender AS creator_gender FROM room_messages gm LEFT JOIN users u ON u.id = gm.user_id WHERE gm.id = ?', Number(info.lastInsertRowid));
+    const m = await db.get(`SELECT ${MSG_COLS} ${MSG_JOINS} WHERE gm.id = ?`, Number(info.lastInsertRowid));
     return res.json({ ok: true, message: serialize([m], req)[0] });
   }
   res.redirect('/');
@@ -176,12 +204,13 @@ router.post('/room/upload', uploadSingle('image'), async (req, res) => {
     return res.status(500).json({ ok: false, error: 'Upload failed. Try again.' });
   }
   const info = await db.run(
-    'INSERT INTO room_messages (user_id, gid, name, body, image_url) VALUES (?, ?, ?, ?, ?)',
+    'INSERT INTO room_messages (user_id, gid, name, body, image_url, reply_to) VALUES (?, ?, ?, ?, ?, ?)',
     req.user ? req.user.id : null,
     req.user ? null : req.gid,
     name,
     '',
-    url
+    url,
+    replyToOf(req)
   );
   const m = await db.get('SELECT gm.*, u.verified AS creator_verified, u.handle AS creator_handle, u.avatar_url AS creator_avatar, u.gender AS creator_gender FROM room_messages gm LEFT JOIN users u ON u.id = gm.user_id WHERE gm.id = ?', Number(info.lastInsertRowid));
   res.json({ ok: true, message: serialize([m], req)[0] });

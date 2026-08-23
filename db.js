@@ -145,6 +145,8 @@ async function migrate() {
     // private chat. Both > 0 = the offer is active.
     'ALTER TABLE users ADD COLUMN offer_cents INTEGER NOT NULL DEFAULT 0',
     'ALTER TABLE users ADD COLUMN offer_minutes INTEGER NOT NULL DEFAULT 0',
+    // A room message can be a reply to an earlier one (quotes it + notifies).
+    'ALTER TABLE room_messages ADD COLUMN reply_to INTEGER',
   ];
   for (const sql of stmts) {
     try {
