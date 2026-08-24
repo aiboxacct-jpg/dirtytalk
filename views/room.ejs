@@ -54,6 +54,8 @@
     <button type="button" id="reply-cancel" title="Cancel reply">✕</button>
   </div>
 
+  <div id="mention-list" class="mention-list" hidden></div>
+
   <form id="room-form" class="room-form" action="/room" method="post">
     <% if (isGuest) { %>
       <input type="text" id="room-name" name="name" maxlength="30" value="<%= suggestedName %>" placeholder="Your name">
@@ -93,6 +95,97 @@
   function clearReply() { replyTo = null; if (replyCtx) replyCtx.hidden = true; }
   var replyCancel = document.getElementById('reply-cancel');
   if (replyCancel) replyCancel.addEventListener('click', clearReply);
+
+  // --- @mentions: type @name to ping someone; they get notified -------------
+  var myBaseName = <%- JSON.stringify(suggestedName) %>;
+  function getMyName() { return (nameInput ? nameInput.value.trim() : '') || myBaseName; }
+  var MENTION_RE = /@([A-Za-z0-9][\w.\-]*)/g;
+  // Append text to a container, wrapping @mentions in a highlight span (XSS-safe).
+  function appendMentions(container, text) {
+    text = String(text == null ? '' : text);
+    var last = 0, m;
+    MENTION_RE.lastIndex = 0;
+    while ((m = MENTION_RE.exec(text))) {
+      if (m.index > last) container.appendChild(document.createTextNode(text.slice(last, m.index)));
+      container.appendChild(el('span', 'mention', m[0]));
+      last = m.index + m[0].length;
+    }
+    if (last < text.length) container.appendChild(document.createTextNode(text.slice(last)));
+  }
+  function mentionsMe(body) {
+    var name = getMyName();
+    if (!name || !body) return false;
+    return new RegExp('@' + name.replace(/[.*+?^${}()|[\]\\\-]/g, '\\$&') + '\\b', 'i').test(body);
+  }
+  function notifyMention(m) {
+    var t = el('div', 'reply-toast', '💬 ' + (m.name || 'Someone') + ' mentioned you');
+    t.addEventListener('click', function () {
+      var tg = box.querySelector('.rmsg[data-id="' + m.id + '"]');
+      if (tg) tg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      t.remove();
+    });
+    document.body.appendChild(t);
+    setTimeout(function () { t.classList.add('show'); }, 20);
+    setTimeout(function () { t.classList.remove('show'); setTimeout(function () { t.remove(); }, 300); }, 5000);
+  }
+  // Highlight @mentions in the server-rendered messages already on screen.
+  [].forEach.call(document.querySelectorAll('#room-msgs .rmsg-body'), function (b) {
+    var tn = b.firstChild;
+    if (tn && tn.nodeType === 3 && tn.textContent.indexOf('@') > -1) {
+      var frag = document.createDocumentFragment();
+      appendMentions(frag, tn.textContent);
+      b.replaceChild(frag, tn);
+    }
+  });
+
+  // @ autocomplete: suggest recent chatters / online creators.
+  var mentionList = document.getElementById('mention-list');
+  function candidateNames() {
+    var seen = {}, out = [];
+    function add(n) { n = (n || '').trim(); if (n && !seen[n.toLowerCase()]) { seen[n.toLowerCase()] = 1; out.push(n); } }
+    [].forEach.call(document.querySelectorAll('#room-msgs .rmsg-name'), function (e) { add(e.textContent); });
+    [].forEach.call(document.querySelectorAll('.creator-chip'), function (e) { add(e.textContent.replace(/[♂♀✔]/g, '')); });
+    var me = getMyName().toLowerCase();
+    return out.filter(function (n) { return n.toLowerCase() !== me; });
+  }
+  function currentToken() {
+    var pos = input.selectionStart == null ? input.value.length : input.selectionStart;
+    var m = input.value.slice(0, pos).match(/@([A-Za-z0-9][\w.\-]*)?$/);
+    return m ? { start: pos - m[0].length, q: (m[1] || '') } : null;
+  }
+  function hideMentions() { mentionList.hidden = true; mentionList.textContent = ''; }
+  function insertMention(tok, name) {
+    var pos = input.selectionStart == null ? input.value.length : input.selectionStart;
+    input.value = input.value.slice(0, tok.start) + '@' + name + ' ' + input.value.slice(pos);
+    var caret = tok.start + name.length + 2;
+    try { input.setSelectionRange(caret, caret); } catch (e) {}
+    input.focus();
+    hideMentions();
+  }
+  function showMentions() {
+    var tok = currentToken();
+    if (!tok) return hideMentions();
+    var q = tok.q.toLowerCase();
+    var matches = candidateNames().filter(function (n) { return n.toLowerCase().indexOf(q) === 0; }).slice(0, 6);
+    if (!matches.length) return hideMentions();
+    mentionList.textContent = '';
+    matches.forEach(function (n) {
+      var item = el('button', 'mention-item', '@' + n);
+      item.type = 'button';
+      item.addEventListener('mousedown', function (e) { e.preventDefault(); insertMention(tok, n); });
+      mentionList.appendChild(item);
+    });
+    mentionList.hidden = false;
+  }
+  input.addEventListener('input', showMentions);
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') hideMentions();
+    else if (e.key === 'Enter' && !mentionList.hidden) {
+      var first = mentionList.querySelector('.mention-item');
+      if (first) { e.preventDefault(); first.dispatchEvent(new MouseEvent('mousedown')); }
+    }
+  });
+  input.addEventListener('blur', function () { setTimeout(hideMentions, 150); });
 
   // Tell the room we're typing (throttled to once every ~2.5s).
   var lastTypingPing = 0;
@@ -208,7 +301,8 @@
     var rbtn = el('button', 'rmsg-reply', '↩ Reply');
     rbtn.type = 'button'; rbtn.setAttribute('data-id', m.id); rbtn.setAttribute('data-name', m.name);
     if (m.body) {
-      var bodyEl = el('div', 'rmsg-body', m.body);
+      var bodyEl = el('div', 'rmsg-body');
+      appendMentions(bodyEl, m.body); // highlight @mentions
       bodyEl.appendChild(rbtn); // reply lives inside the bubble
       wrap.appendChild(bodyEl);
     } else {
@@ -239,6 +333,7 @@
         data.messages.forEach(function (m) {
           addMessage(m);
           if (m.replyToMe && !m.mine) notifyReply(m); // someone answered your message
+          if (!m.mine && mentionsMe(m.body)) notifyMention(m); // someone @mentioned you
         });
         scrollIfNeeded();
       }
