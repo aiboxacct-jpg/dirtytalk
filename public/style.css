@@ -77,7 +77,11 @@ textarea { resize: vertical; }
 /* Room */
 .room-head h1 { margin-bottom: 2px; }
 .creators-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 0; }
-.strip-label { color: var(--muted); font-size: 0.82rem; font-weight: 600; }
+.strip-label { color: var(--muted); font-size: 0.82rem; font-weight: 600; border: none; background: none; font-family: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; padding: 0; }
+.strip-label:hover { color: var(--brand); }
+.strip-chev { font-size: 0.7rem; }
+.strip-chips { display: contents; } /* chips flow in the strip's flex row */
+.creators-strip.collapsed .strip-chips { display: none; }
 .creator-chip { background: #fbe9f2; color: var(--brand-dark); padding: 4px 12px; border-radius: 999px; font-size: 0.85rem; font-weight: 600; }
 .creator-chip:hover { background: #f6d6e7; text-decoration: none; }
 .guest-chip { display: inline-flex; align-items: center; gap: 4px; background: #efeafc; color: var(--muted); padding: 4px 12px; border-radius: 999px; font-size: 0.82rem; font-weight: 600; white-space: nowrap; }
