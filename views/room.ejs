@@ -10,9 +10,9 @@
   </div>
 <% } %>
 
-<div class="creators-strip" id="here-now"<% if (!creators.length && !guests) { %> hidden<% } %>>
+<div class="here-now" id="here-now"<% if (!creators.length && !guests) { %> hidden<% } %>>
   <button type="button" class="strip-label" id="here-toggle" aria-expanded="true">Here now<% if (creators.length) { %> · <span id="here-count"><%= creators.length %></span><% } %> <span class="strip-chev">▾</span></button>
-  <div class="strip-chips" id="strip-chips">
+  <div class="creators-strip" id="strip-chips">
     <% creators.forEach(function(c){ %>
       <a class="creator-chip" href="/u/<%= c.handle || c.id %>"><% if (c.avatar_url) { %><span class="chip-avatar" style="background-image:url('<%= c.avatar_url %>')"></span><% } %><%= c.name %><% if (c.gender) { %> <span class="gender <%= c.gender %>"><%= c.gender === 'male' ? '♂' : '♀' %></span><% } %><% if (c.verified) { %> <span class="verified" title="Verified">✔</span><% } %></a>
     <% }); %>

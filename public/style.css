@@ -76,12 +76,14 @@ textarea { resize: vertical; }
 
 /* Room */
 .room-head h1 { margin-bottom: 2px; }
-.creators-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 0; }
-.strip-label { color: var(--muted); font-size: 0.82rem; font-weight: 600; border: none; background: none; font-family: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; padding: 0; }
+.here-now { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.creators-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
+/* Label is OUTSIDE the (scrollable-on-mobile) chip strip so taps never get
+   swallowed by a horizontal-scroll gesture. */
+.strip-label { color: var(--muted); font-size: 0.82rem; font-weight: 600; border: none; background: none; font-family: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; padding: 4px 2px; touch-action: manipulation; flex: 0 0 auto; }
 .strip-label:hover { color: var(--brand); }
 .strip-chev { font-size: 0.7rem; }
-.strip-chips { display: contents; } /* chips flow in the strip's flex row */
-.creators-strip.collapsed .strip-chips { display: none; }
+.here-now.collapsed .creators-strip { display: none; }
 .creator-chip { background: #fbe9f2; color: var(--brand-dark); padding: 4px 12px; border-radius: 999px; font-size: 0.85rem; font-weight: 600; }
 .creator-chip:hover { background: #f6d6e7; text-decoration: none; }
 .guest-chip { display: inline-flex; align-items: center; gap: 4px; background: #efeafc; color: var(--muted); padding: 4px 12px; border-radius: 999px; font-size: 0.82rem; font-weight: 600; white-space: nowrap; }
@@ -381,9 +383,10 @@ a.avatar-nudge:hover { background: var(--brand-dark); text-decoration: none; }
   .room-head .sub { font-size: 0.82rem; margin-bottom: 0; }
 
   /* "Here now" — one swipeable row instead of wrapping to many lines */
-  .creators-strip { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; gap: 6px; margin: 8px 0; scrollbar-width: none; }
+  .here-now { flex-wrap: nowrap; margin: 8px 0; }
+  .creators-strip { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; gap: 6px; scrollbar-width: none; }
   .creators-strip::-webkit-scrollbar { display: none; }
-  .strip-label, .creator-chip, .guest-chip { flex: 0 0 auto; }
+  .creator-chip, .guest-chip { flex: 0 0 auto; }
 
   /* Chat fills the screen with the composer visible → single scroll region */
   .room-box { margin: 8px 0; }
