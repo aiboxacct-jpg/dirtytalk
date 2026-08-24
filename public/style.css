@@ -123,6 +123,30 @@ textarea { resize: vertical; }
 .inline { display: inline; margin: 0; }
 .btn.danger { background: var(--danger); color: #fff; }
 .danger-zone { border: 1px solid #f2c2c2; margin-top: 16px; }
+
+/* "Dim the lights" — dark mood, toggled per user on the private-DM page */
+.dim-toggle { float: right; border: 1px solid var(--line); background: none; color: var(--muted); font-size: 0.78rem; font-weight: 600; padding: 4px 11px; border-radius: 999px; cursor: pointer; }
+.dim-toggle:hover { border-color: var(--brand); color: var(--brand); }
+body.dim {
+  --bg: #141019;
+  --card: #1e1826;
+  --ink: #ece8f2;
+  --muted: #9d94ab;
+  --line: #332b3f;
+  --soft: #271f33;
+}
+body.dim a { color: #ef8cba; }
+body.dim input[type=text], body.dim input[type=email], body.dim input[type=password], body.dim textarea { background: #251d31; color: var(--ink); }
+body.dim .rmsg-body { background: #2a2236; }
+body.dim .rmsg.mine .rmsg-body { background: #3f2439; }
+body.dim .rmsg-quote { background: #2a2236; color: var(--muted); }
+body.dim .rmsg-name, body.dim .dm-title { color: var(--ink); }
+body.dim .rmsg-name.creator { color: #ef8cba; }
+body.dim .hostbar { background: #251d31; }
+body.dim .freebar { background: #251d31; }
+body.dim .paywall { background: #251d31; }
+body.dim .offer-card { background: linear-gradient(135deg, #2c2033, #232031); border-color: #3a2f45; color: var(--ink); }
+body.dim .dim-toggle { border-color: #4a3f5c; color: #cdc4db; }
 .btn.danger:hover { background: #b83a3a; }
 .rmsg-body { background: #f4eff8; border-radius: 12px; padding: 8px 12px; display: inline-block; margin-top: 2px; word-break: break-word; }
 .rmsg.mine .rmsg-body { background: #fbe4ef; }

@@ -1,6 +1,7 @@
 <p class="back"><a href="/dm">← All messages</a></p>
 
 <div class="card">
+  <button type="button" id="dim-toggle" class="dim-toggle">🔅 Dim the lights…</button>
   <div class="dm-head">
     <% if (otherAvatar) { %>
       <span class="avatar-preview" data-initial="<%= (otherName || '').charAt(0) %>" style="background-image:url('<%= otherAvatar %>')"></span>
@@ -325,6 +326,24 @@
     } catch (e) { alert('Upload didn’t go through — please refresh the page and try again.'); }
     photoBtn.disabled = false; photoBtn.textContent = orig;
     fileInput.value = '';
+  });
+})();
+
+// "Dim the lights" — dark mood for private chats, remembered per device.
+(function () {
+  var btn = document.getElementById('dim-toggle');
+  if (!btn) return;
+  function apply(on) {
+    document.body.classList.toggle('dim', on);
+    btn.textContent = on ? '☀️ Lights on' : '🔅 Dim the lights…';
+  }
+  var on = false;
+  try { on = localStorage.getItem('dm_dim') === '1'; } catch (e) {}
+  apply(on);
+  btn.addEventListener('click', function () {
+    on = !on;
+    try { localStorage.setItem('dm_dim', on ? '1' : '0'); } catch (e) {}
+    apply(on);
   });
 })();
 </script>
