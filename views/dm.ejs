@@ -73,6 +73,13 @@
     <p class="pay-warn">⚠ Only click “Payment received” if you have actually received the payment!</p>
   <% } %>
 
+  <% if (!isCreator) { %>
+    <div class="paid-notify-wrap">
+      <button type="button" id="paid-notify" class="btn small paid-notify-btn">✅ I sent the payment</button>
+      <span id="paid-notify-note" class="pay-note" hidden></span>
+    </div>
+  <% } %>
+
   <div id="typing-ind" class="typing-ind" hidden><%= otherName %> is typing<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span></div>
 
   <form id="dm-form" class="chat-form" action="/dm/<%= thread.id %>/reply<%= tokenSuffix %>" method="post">
@@ -315,6 +322,23 @@
     } catch (e) {}
   }
   setInterval(poll, 4000);
+
+  // Buyer tells the host they've sent payment (works even while paused).
+  var paidBtn = document.getElementById('paid-notify');
+  var paidNote = document.getElementById('paid-notify-note');
+  if (paidBtn) paidBtn.addEventListener('click', async function () {
+    if (!confirm('Let the host know you sent your payment?')) return;
+    paidBtn.disabled = true;
+    try {
+      var r = await fetch(base + '/paid-notify' + tokenQ, { method: 'POST', headers: { accept: 'application/json' } });
+      var d = await r.json();
+      if (d.ok) {
+        if (paidNote) { paidNote.textContent = '✓ Host notified'; paidNote.hidden = false; }
+        atBottom = true; await poll();
+      }
+    } catch (e) {}
+    setTimeout(function () { paidBtn.disabled = false; }, 30000);
+  });
 
   form.addEventListener('submit', async function (e) {
     e.preventDefault();

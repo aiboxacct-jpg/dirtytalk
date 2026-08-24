@@ -294,6 +294,25 @@ router.post('/:id/typing', async (req, res) => {
   res.json({ ok: true });
 });
 
+// The buyer/guest tells the host they sent a payment. Posts a notice into the
+// chat even while they're paused (paywall-locked), so the host sees it and can
+// grant time. Light per-thread cooldown to avoid spam.
+const paidNotifyAt = new Map();
+router.post('/:id/paid-notify', async (req, res) => {
+  const thread = await threadWithCreator(req.params.id);
+  if (!thread) return res.status(404).json({ ok: false });
+  const acc = access(thread, req);
+  if (!acc.ok) return res.status(403).json({ ok: false });
+  const now = Date.now();
+  const last = paidNotifyAt.get(thread.id) || 0;
+  if (now - last < 25000) return res.json({ ok: true, throttled: true }); // already sent recently
+  paidNotifyAt.set(thread.id, now);
+  const sender = acc.isCreator ? 'creator' : 'guest';
+  await addMessage(thread.id, sender, '💸 I sent the payment — please check and unlock me! 🙏');
+  clearTyping(thread.id, sender);
+  res.json({ ok: true });
+});
+
 // --- Reply within a thread --------------------------------------------------
 router.post('/:id/reply', async (req, res) => {
   const thread = await threadWithCreator(req.params.id);
