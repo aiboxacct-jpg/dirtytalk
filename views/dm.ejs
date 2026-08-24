@@ -73,7 +73,7 @@
     <p class="pay-warn">⚠ Only click “Payment received” if you have actually received the payment!</p>
   <% } %>
 
-  <% if (!isCreator) { %>
+  <% if (!isCreator && !thread.admin_dm) { %>
     <div class="paid-notify-wrap">
       <button type="button" id="paid-notify" class="btn small paid-notify-btn">✅ I sent the payment</button>
       <span id="paid-notify-note" class="pay-note" hidden></span>
