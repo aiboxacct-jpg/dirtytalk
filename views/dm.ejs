@@ -84,6 +84,8 @@
 
   <div id="typing-ind" class="typing-ind" hidden><%= otherName %> is typing<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span></div>
 
+  <div id="dm-mention-list" class="mention-list" hidden></div>
+
   <form id="dm-form" class="chat-form" action="/dm/<%= thread.id %>/reply<%= tokenSuffix %>" method="post">
     <textarea id="dm-reply" name="body" rows="2" maxlength="2000" placeholder="Write a reply…" required></textarea>
     <button type="button" class="emoji-btn" data-target="dm-reply" aria-label="Emoji" title="Emoji">😊</button>
@@ -267,15 +269,78 @@
     }
     if (last < text.length) container.appendChild(document.createTextNode(text.slice(last)));
   }
-  // Linkify the server-rendered messages already on screen.
+  // Render a message body: @mentions highlighted, URLs linkified.
+  var MENTION_RE = /@([A-Za-z0-9][\w.\-]*)/g;
+  function appendRich(container, text) {
+    text = String(text == null ? '' : text);
+    var last = 0, m;
+    MENTION_RE.lastIndex = 0;
+    while ((m = MENTION_RE.exec(text))) {
+      if (m.index > last) linkifyInto(container, text.slice(last, m.index));
+      container.appendChild(el('span', 'mention', m[0]));
+      last = m.index + m[0].length;
+    }
+    if (last < text.length) linkifyInto(container, text.slice(last));
+  }
+  // Highlight @mentions + linkify the server-rendered messages already on screen.
   [].forEach.call(document.querySelectorAll('#dm-msgs .rmsg-body'), function (b) {
     var tn = b.firstChild;
-    if (tn && tn.nodeType === 3 && /https?:\/\/|www\./i.test(tn.textContent)) {
+    if (tn && tn.nodeType === 3 && /@|https?:\/\/|www\./i.test(tn.textContent)) {
       var frag = document.createDocumentFragment();
-      linkifyInto(frag, tn.textContent);
+      appendRich(frag, tn.textContent);
       b.replaceChild(frag, tn);
     }
   });
+
+  // --- @mentions in this private chat ---------------------------------------
+  var myName = <%- JSON.stringify(myName || '') %>;
+  function mentionsMe(body) {
+    if (!myName || !body) return false;
+    return new RegExp('@' + myName.replace(/[.*+?^${}()|[\]\\\-]/g, '\\$&') + '\\b', 'i').test(body);
+  }
+  function notifyMention() {
+    var t = el('div', 'reply-toast', '💬 ' + otherName + ' mentioned you');
+    t.addEventListener('click', function () { t.remove(); });
+    document.body.appendChild(t);
+    setTimeout(function () { t.classList.add('show'); }, 20);
+    setTimeout(function () { t.classList.remove('show'); setTimeout(function () { t.remove(); }, 300); }, 5000);
+  }
+  // @ autocomplete — in a 1-on-1, suggest the other person.
+  var dmMentionList = document.getElementById('dm-mention-list');
+  function dmToken() {
+    var pos = input.selectionStart == null ? input.value.length : input.selectionStart;
+    var mm = input.value.slice(0, pos).match(/@([A-Za-z0-9][\w.\-]*)?$/);
+    return mm ? { start: pos - mm[0].length, q: (mm[1] || '') } : null;
+  }
+  function dmHideMentions() { dmMentionList.hidden = true; dmMentionList.textContent = ''; }
+  function dmInsert(tok, name) {
+    var pos = input.selectionStart == null ? input.value.length : input.selectionStart;
+    input.value = input.value.slice(0, tok.start) + '@' + name + ' ' + input.value.slice(pos);
+    var caret = tok.start + name.length + 2;
+    try { input.setSelectionRange(caret, caret); } catch (e) {}
+    input.focus();
+    dmHideMentions();
+  }
+  function dmShowMentions() {
+    var tok = dmToken();
+    if (!tok || !otherName) return dmHideMentions();
+    if (otherName.toLowerCase().indexOf(tok.q.toLowerCase()) !== 0) return dmHideMentions();
+    dmMentionList.textContent = '';
+    var item = el('button', 'mention-item', '@' + otherName);
+    item.type = 'button';
+    item.addEventListener('mousedown', function (e) { e.preventDefault(); dmInsert(tok, otherName); });
+    dmMentionList.appendChild(item);
+    dmMentionList.hidden = false;
+  }
+  input.addEventListener('input', dmShowMentions);
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') dmHideMentions();
+    else if (e.key === 'Enter' && !e.shiftKey && !dmMentionList.hidden) {
+      var first = dmMentionList.querySelector('.mention-item');
+      if (first) { e.preventDefault(); first.dispatchEvent(new MouseEvent('mousedown')); }
+    }
+  });
+  input.addEventListener('blur', function () { setTimeout(dmHideMentions, 150); });
 
   function addMessage(m) {
     if (empty) { empty.remove(); empty = null; }
@@ -308,7 +373,7 @@
       link.appendChild(img);
       wrap.appendChild(link);
     }
-    if (m.body) { var bodyEl = el('div', 'rmsg-body'); linkifyInto(bodyEl, m.body); wrap.appendChild(bodyEl); }
+    if (m.body) { var bodyEl = el('div', 'rmsg-body'); appendRich(bodyEl, m.body); wrap.appendChild(bodyEl); }
     box.appendChild(wrap);
     if (m.id > lastId) lastId = m.id;
   }
@@ -320,7 +385,13 @@
       var data = await r.json();
       if (data.paywall) { paywall = data.paywall; clockOffset = paywall.now ? paywall.now - Date.now() : clockOffset; renderPaywall(); }
       if (typingInd) { var wasHidden = typingInd.hidden; typingInd.hidden = !data.typing; if (wasHidden && data.typing) scrollIfNeeded(); }
-      if (data.messages && data.messages.length) { data.messages.forEach(addMessage); scrollIfNeeded(); markSeen(); }
+      if (data.messages && data.messages.length) {
+        data.messages.forEach(function (m) {
+          addMessage(m);
+          if (!m.mine && mentionsMe(m.body)) notifyMention(); // the other person @mentioned you
+        });
+        scrollIfNeeded(); markSeen();
+      }
     } catch (e) {}
   }
   setInterval(poll, 4000);

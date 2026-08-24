@@ -248,6 +248,8 @@ router.get('/:id', async (req, res) => {
     messages: serializeDm(messages, dmContext(thread, acc)),
     isCreator: acc.isCreator,
     otherName: acc.isCreator ? thread.guest_name || 'Guest' : thread.creator_name,
+    // The viewer's own name — for @mention "you were mentioned" detection.
+    myName: acc.isCreator ? thread.creator_name : thread.guest_name || '',
     // The other party's profile bits — only the creator has these, so they show
     // on the guest's side (avatar in the header + beside each of her messages).
     otherAvatar: acc.isCreator ? null : thread.creator_avatar || null,
