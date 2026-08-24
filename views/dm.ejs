@@ -1,13 +1,15 @@
 <p class="back"><a href="/dm">← All messages</a></p>
 
 <div class="card">
-  <button type="button" id="dim-toggle" class="dim-toggle">🔅 Dim the lights…</button>
   <div class="dm-head">
     <% if (otherAvatar) { %>
       <span class="avatar-preview" data-initial="<%= (otherName || '').charAt(0) %>" style="background-image:url('<%= otherAvatar %>')"></span>
     <% } %>
     <div class="dm-head-info">
-      <h1 class="dm-title"><%= otherName %><% if (otherGender) { %> <span class="gender <%= otherGender %>" title="<%= otherGender %>"><%= otherGender === 'male' ? '♂' : '♀' %></span><% } %><% if (otherVerified) { %> <span class="verified" title="Verified">✔</span><% } %></h1>
+      <div class="dm-title-row">
+        <h1 class="dm-title"><%= otherName %><% if (otherGender) { %> <span class="gender <%= otherGender %>" title="<%= otherGender %>"><%= otherGender === 'male' ? '♂' : '♀' %></span><% } %><% if (otherVerified) { %> <span class="verified" title="Verified">✔</span><% } %></h1>
+        <button type="button" id="dim-toggle" class="dim-toggle">🔅 Dim the lights…</button>
+      </div>
       <p class="sub" style="margin-top:0;">
         <% if (isCreator) { %>Private chat<% } else { %>Private chat · <a href="/u/<%= otherHandle %>">view profile</a><% } %>
       </p>

@@ -137,7 +137,7 @@ textarea { resize: vertical; }
 .danger-zone { border: 1px solid #f2c2c2; margin-top: 16px; }
 
 /* "Dim the lights" — dark mood, toggled per user on the private-DM page */
-.dim-toggle { float: right; border: 1px solid var(--line); background: none; color: var(--muted); font-size: 0.78rem; font-weight: 600; padding: 4px 11px; border-radius: 999px; cursor: pointer; }
+.dim-toggle { flex: 0 0 auto; margin-left: auto; border: 1px solid var(--line); background: none; color: var(--muted); font-size: 0.74rem; font-weight: 600; padding: 4px 10px; border-radius: 999px; cursor: pointer; white-space: nowrap; }
 .dim-toggle:hover { border-color: var(--brand); color: var(--brand); }
 body.dim {
   --bg: #141019;
@@ -306,9 +306,11 @@ a.avatar-nudge:hover { background: var(--brand-dark); text-decoration: none; }
 .gpick .gender { font-size: 1.05rem; }
 
 .dm-starter { margin-top: 16px; }
-.dm-title { margin-bottom: 0; }
-.dm-head { display: flex; align-items: center; gap: 14px; margin-bottom: 4px; }
-.dm-head-info { min-width: 0; }
+.dm-title { margin: 0; }
+.dm-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 4px; }
+.dm-head .avatar-preview { flex: 0 0 auto; }
+.dm-head-info { flex: 1 1 auto; min-width: 0; }
+.dm-title-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .dm-bio { margin: 4px 0 0; color: var(--muted); font-size: 0.88rem; }
 
 /* "is typing…" indicator */
