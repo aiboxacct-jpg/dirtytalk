@@ -101,16 +101,35 @@
   function getMyName() { return (nameInput ? nameInput.value.trim() : '') || myBaseName; }
   var MENTION_RE = /@([A-Za-z0-9][\w.\-]*)/g;
   // Append text to a container, wrapping @mentions in a highlight span (XSS-safe).
+  // Turn URLs in a text run into clickable links (XSS-safe: builds nodes).
+  function linkifyInto(container, text) {
+    text = String(text == null ? '' : text);
+    var re = /((?:https?:\/\/|www\.)[^\s]+)/gi, last = 0, m;
+    while ((m = re.exec(text))) {
+      if (m.index > last) container.appendChild(document.createTextNode(text.slice(last, m.index)));
+      var raw = m[0], trail = '', mt = raw.match(/[.,!?;:'")\]]+$/);
+      if (mt) { trail = mt[0]; raw = raw.slice(0, raw.length - trail.length); }
+      var a = document.createElement('a');
+      a.href = /^https?:\/\//i.test(raw) ? raw : 'https://' + raw; // only http/https or www → https
+      a.target = '_blank'; a.rel = 'noopener noreferrer nofollow'; a.className = 'chat-link';
+      a.textContent = raw;
+      container.appendChild(a);
+      if (trail) container.appendChild(document.createTextNode(trail));
+      last = m.index + m[0].length;
+    }
+    if (last < text.length) container.appendChild(document.createTextNode(text.slice(last)));
+  }
+  // Render a message body: @mentions highlighted, URLs linkified.
   function appendMentions(container, text) {
     text = String(text == null ? '' : text);
     var last = 0, m;
     MENTION_RE.lastIndex = 0;
     while ((m = MENTION_RE.exec(text))) {
-      if (m.index > last) container.appendChild(document.createTextNode(text.slice(last, m.index)));
+      if (m.index > last) linkifyInto(container, text.slice(last, m.index));
       container.appendChild(el('span', 'mention', m[0]));
       last = m.index + m[0].length;
     }
-    if (last < text.length) container.appendChild(document.createTextNode(text.slice(last)));
+    if (last < text.length) linkifyInto(container, text.slice(last));
   }
   function mentionsMe(body) {
     var name = getMyName();
@@ -128,10 +147,10 @@
     setTimeout(function () { t.classList.add('show'); }, 20);
     setTimeout(function () { t.classList.remove('show'); setTimeout(function () { t.remove(); }, 300); }, 5000);
   }
-  // Highlight @mentions in the server-rendered messages already on screen.
+  // Highlight @mentions + linkify URLs in the server-rendered messages on screen.
   [].forEach.call(document.querySelectorAll('#room-msgs .rmsg-body'), function (b) {
     var tn = b.firstChild;
-    if (tn && tn.nodeType === 3 && tn.textContent.indexOf('@') > -1) {
+    if (tn && tn.nodeType === 3 && /@|https?:\/\/|www\./i.test(tn.textContent)) {
       var frag = document.createDocumentFragment();
       appendMentions(frag, tn.textContent);
       b.replaceChild(frag, tn);

@@ -99,6 +99,8 @@ textarea { resize: vertical; }
 .reply-toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px); background: var(--brand); color: #fff; font-weight: 700; font-size: 0.9rem; padding: 10px 16px; border-radius: 999px; box-shadow: 0 6px 20px rgba(0,0,0,0.22); cursor: pointer; opacity: 0; transition: opacity 0.25s, transform 0.25s; z-index: 60; }
 .reply-toast.show { opacity: 1; transform: translate(-50%, 0); }
 .mention { color: var(--accent); font-weight: 700; }
+.chat-link { color: var(--accent); text-decoration: underline; overflow-wrap: anywhere; }
+.rmsg.mine .chat-link { color: var(--brand-dark); }
 .mention-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 -2px; }
 .mention-item { border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 999px; padding: 4px 11px; font-size: 0.82rem; font-weight: 600; cursor: pointer; }
 .mention-item:hover { border-color: var(--brand); color: var(--brand); }

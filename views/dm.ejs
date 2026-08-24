@@ -240,6 +240,34 @@
     if (text != null) e.textContent = text; // textContent => XSS-safe
     return e;
   }
+  // Turn URLs in a message into clickable links (XSS-safe: builds nodes).
+  function linkifyInto(container, text) {
+    text = String(text == null ? '' : text);
+    var re = /((?:https?:\/\/|www\.)[^\s]+)/gi, last = 0, m;
+    while ((m = re.exec(text))) {
+      if (m.index > last) container.appendChild(document.createTextNode(text.slice(last, m.index)));
+      var raw = m[0], trail = '', mt = raw.match(/[.,!?;:'")\]]+$/);
+      if (mt) { trail = mt[0]; raw = raw.slice(0, raw.length - trail.length); }
+      var a = document.createElement('a');
+      a.href = /^https?:\/\//i.test(raw) ? raw : 'https://' + raw;
+      a.target = '_blank'; a.rel = 'noopener noreferrer nofollow'; a.className = 'chat-link';
+      a.textContent = raw;
+      container.appendChild(a);
+      if (trail) container.appendChild(document.createTextNode(trail));
+      last = m.index + m[0].length;
+    }
+    if (last < text.length) container.appendChild(document.createTextNode(text.slice(last)));
+  }
+  // Linkify the server-rendered messages already on screen.
+  [].forEach.call(document.querySelectorAll('#dm-msgs .rmsg-body'), function (b) {
+    var tn = b.firstChild;
+    if (tn && tn.nodeType === 3 && /https?:\/\/|www\./i.test(tn.textContent)) {
+      var frag = document.createDocumentFragment();
+      linkifyInto(frag, tn.textContent);
+      b.replaceChild(frag, tn);
+    }
+  });
+
   function addMessage(m) {
     if (empty) { empty.remove(); empty = null; }
     if (box.querySelector('.rmsg[data-id="' + m.id + '"]')) return;
@@ -271,7 +299,7 @@
       link.appendChild(img);
       wrap.appendChild(link);
     }
-    if (m.body) wrap.appendChild(el('div', 'rmsg-body', m.body));
+    if (m.body) { var bodyEl = el('div', 'rmsg-body'); linkifyInto(bodyEl, m.body); wrap.appendChild(bodyEl); }
     box.appendChild(wrap);
     if (m.id > lastId) lastId = m.id;
   }
