@@ -243,6 +243,8 @@ body.dim .dim-toggle { border-color: #4a3f5c; color: #cdc4db; }
 .mini-card { flex: 0 1 auto; min-width: 92px; background: var(--soft, #faf7fd); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; }
 .mini-num { font-size: 1.15rem; font-weight: 800; color: var(--ink); line-height: 1.1; }
 .mini-label { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+.profile-link-btn { display: inline-block; margin: 2px 0 8px; animation: cta-blink 1.6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .profile-link-btn { animation: none; } }
 .cashapp-pay { display: inline-block; background: #00c244; margin-top: 4px; }
 .cashapp-pay:hover { background: #00a83a; }
 .due-warning { background: #fff4e5; border: 1px solid #ffc98a; color: #8a5300; border-radius: 10px; padding: 10px 12px; font-size: 0.86rem; margin: 4px 0 10px; }

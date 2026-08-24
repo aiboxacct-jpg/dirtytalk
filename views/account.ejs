@@ -39,8 +39,8 @@
   </div>
 
   <% var _slug = user.handle || user.id; %>
-  <p class="hint">Your public profile & tip link:
-    <a href="/u/<%= _slug %>" target="_blank" rel="noopener">/u/<%= _slug %></a></p>
+  <label>Your public profile & tip link</label>
+  <a href="/u/<%= _slug %>" target="_blank" rel="noopener" class="btn profile-link-btn">🔗 View your profile — /u/<%= _slug %></a>
   <%- include('partials/share', { shareUrl: absUrl('/u/' + _slug), shareTitle: user.name + ' — come chat with me on ' + siteName + ' 😘', label: 'Share your profile:' }) %>
 
   <div class="avatar-row">
