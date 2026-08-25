@@ -43,7 +43,7 @@
           <% if (m.verified) { %><span class="verified" title="Verified">✔</span><% } %>
           <% if (m.creatorId && !m.mine) { %><a class="rmsg-dm" href="/u/<%= m.creatorHandle %>#tip">💬 Click Here To Chat Privately</a><% } %>
           <span class="rmsg-time"><%= (m.created_at || '').slice(11,16) %></span>
-          <% if (isAdmin) { %><button type="button" class="rmsg-del" data-id="<%= m.id %>" title="Delete">✕</button><% } %>
+          <% if (isAdmin || m.mine) { %><button type="button" class="rmsg-del" data-id="<%= m.id %>" title="Delete">✕</button><% } %>
         </div>
         <% if (m.image) { %>
           <a class="chat-img-link" href="<%= m.image %>" target="_blank" rel="noopener"><img class="chat-img" src="<%= m.image %>" alt="shared picture" loading="lazy"></a>
@@ -359,7 +359,7 @@
       head.appendChild(dm); // next to the username
     }
     head.appendChild(el('span', 'rmsg-time', (m.created_at || '').slice(11, 16)));
-    if (isAdmin) {
+    if (isAdmin || m.mine) {
       var del = el('button', 'rmsg-del', '✕');
       del.type = 'button';
       del.setAttribute('data-id', m.id);
@@ -471,17 +471,20 @@
   });
 
   // Admin moderation: delete a message, or clear the whole room
+  // Delete a message — the ✕ shows on your own messages (admins see it on all).
+  box.addEventListener('click', async function (e) {
+    var btn = e.target.closest('.rmsg-del');
+    if (!btn) return;
+    if (!confirm('Delete this message?')) return;
+    var id = btn.getAttribute('data-id');
+    try {
+      var r = await fetch('/room/' + id + '/delete', { method: 'POST', headers: { accept: 'application/json' } });
+      if (r.ok) { var node = box.querySelector('.rmsg[data-id="' + id + '"]'); if (node) node.remove(); }
+    } catch (e) {}
+  });
+
+  // Admin: clear the whole room.
   if (isAdmin) {
-    box.addEventListener('click', async function (e) {
-      var btn = e.target.closest('.rmsg-del');
-      if (!btn) return;
-      var id = btn.getAttribute('data-id');
-      try {
-        await fetch('/room/' + id + '/delete', { method: 'POST', headers: { accept: 'application/json' } });
-        var node = box.querySelector('.rmsg[data-id="' + id + '"]');
-        if (node) node.remove();
-      } catch (e) {}
-    });
     var clearBtn = document.getElementById('clear-room');
     if (clearBtn) clearBtn.addEventListener('click', async function () {
       if (!confirm('Clear the entire room? This deletes every message and picture for everyone.')) return;

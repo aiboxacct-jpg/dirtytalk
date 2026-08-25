@@ -225,12 +225,17 @@ router.post('/room/upload', uploadSingle('image'), async (req, res) => {
   res.json({ ok: true, message: serialize([m], req)[0] });
 });
 
-// --- Admin moderation ------------------------------------------------------
-// Delete one message (and its picture, if any).
-router.post('/room/:id/delete', requireAdmin, async (req, res) => {
-  const m = await db.get('SELECT image_url FROM room_messages WHERE id = ?', req.params.id);
-  await db.run('DELETE FROM room_messages WHERE id = ?', req.params.id);
-  if (m && m.image_url) deleteImage(m.image_url); // best-effort, don't block the response
+// Delete one message (and its picture) — the author can delete their own; an
+// admin can delete anyone's.
+router.post('/room/:id/delete', async (req, res) => {
+  const m = await db.get('SELECT id, user_id, gid, image_url FROM room_messages WHERE id = ?', req.params.id);
+  if (!m) return res.json({ ok: true }); // already gone
+  const owns =
+    (!!req.user && m.user_id === req.user.id) ||
+    (!req.user && !!m.gid && m.gid === req.gid);
+  if (!req.isAdmin && !owns) return res.status(403).json({ ok: false, error: 'Not allowed.' });
+  await db.run('DELETE FROM room_messages WHERE id = ?', m.id);
+  if (m.image_url) deleteImage(m.image_url); // best-effort, don't block the response
   res.json({ ok: true });
 });
 

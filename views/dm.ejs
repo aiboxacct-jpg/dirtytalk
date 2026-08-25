@@ -44,6 +44,7 @@
           <% if (m.gender) { %><span class="gender <%= m.gender %>" title="<%= m.gender %>"><%= m.gender === 'male' ? '♂' : '♀' %></span><% } %>
           <% if (m.verified) { %><span class="verified" title="Verified">✔</span><% } %>
           <span class="rmsg-time"><%= (m.created_at || '').slice(11, 16) %></span>
+          <% if (m.mine) { %><button type="button" class="rmsg-del" data-id="<%= m.id %>" title="Delete">✕</button><% } %>
         </div>
         <% if (m.image) { %><a class="chat-img-link" href="<%= m.image %>" target="_blank" rel="noopener"><img class="chat-img" src="<%= m.image %>" alt="shared picture" loading="lazy"></a><% } %>
         <% if (m.body) { %><div class="rmsg-body"><%= m.body %><button type="button" class="rmsg-reply" data-id="<%= m.id %>" data-name="<%= m.name %>">↩ Reply</button></div><% } else { %><button type="button" class="rmsg-reply solo" data-id="<%= m.id %>" data-name="<%= m.name %>">↩ Reply</button><% } %>
@@ -255,6 +256,17 @@
   box.addEventListener('scroll', function () {
     atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 40;
   });
+  // Delete your own message (the ✕ only shows on your messages).
+  box.addEventListener('click', async function (e) {
+    var btn = e.target.closest('.rmsg-del');
+    if (!btn) return;
+    if (!confirm('Delete this message?')) return;
+    var id = btn.getAttribute('data-id');
+    try {
+      var r = await fetch(base + '/message/' + id + '/delete' + tokenQ, { method: 'POST', headers: { accept: 'application/json' } });
+      if (r.ok) { var node = box.querySelector('.rmsg[data-id="' + id + '"]'); if (node) node.remove(); }
+    } catch (e) {}
+  });
   function scrollIfNeeded() { if (atBottom) box.scrollTop = box.scrollHeight; }
   scrollIfNeeded();
 
@@ -409,6 +421,11 @@
     if (m.gender) { var g = el('span', 'gender ' + m.gender, m.gender === 'male' ? '♂' : '♀'); g.title = m.gender; head.appendChild(g); }
     if (m.verified) { var v = el('span', 'verified', '✔'); v.title = 'Verified'; head.appendChild(v); }
     head.appendChild(el('span', 'rmsg-time', (m.created_at || '').slice(11, 16)));
+    if (m.mine) {
+      var del = el('button', 'rmsg-del', '✕');
+      del.type = 'button'; del.setAttribute('data-id', m.id); del.title = 'Delete';
+      head.appendChild(del);
+    }
     wrap.appendChild(head);
     if (m.image) {
       var link = document.createElement('a');

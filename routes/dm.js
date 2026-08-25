@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const db = require('../db');
 const { tipLinks } = require('../tips');
 const { getFeeCents } = require('../siteconfig');
-const { uploadSingle, uploadImage } = require('../storage');
+const { uploadSingle, uploadImage, deleteImage } = require('../storage');
 
 const router = express.Router();
 const MAX = 2000;
@@ -445,6 +445,21 @@ router.post('/:id/payment', async (req, res) => {
     bill: '$' + (u.bill_cents / 100).toFixed(2),
     sales: u.sales_count,
   });
+});
+
+// Delete one of your own private-chat messages (admins can delete any).
+router.post('/:id/message/:mid/delete', async (req, res) => {
+  const thread = await threadWithCreator(req.params.id);
+  if (!thread) return res.status(404).json({ ok: false });
+  const acc = access(thread, req);
+  if (!acc.ok) return res.status(403).json({ ok: false });
+  const msg = await db.get('SELECT id, sender, image_url FROM dm_messages WHERE id = ? AND thread_id = ?', req.params.mid, thread.id);
+  if (!msg) return res.json({ ok: true }); // already gone
+  const mine = msg.sender === (acc.isCreator ? 'creator' : 'guest');
+  if (!mine && !req.isAdmin) return res.status(403).json({ ok: false, error: 'Not allowed.' });
+  await db.run('DELETE FROM dm_messages WHERE id = ?', msg.id);
+  if (msg.image_url) deleteImage(msg.image_url);
+  res.json({ ok: true });
 });
 
 module.exports = router;
