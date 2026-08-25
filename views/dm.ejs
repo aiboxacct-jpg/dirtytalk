@@ -31,6 +31,7 @@
     <% } %>
     <% messages.forEach(function(m){ %>
       <div class="rmsg <%= m.mine ? 'mine' : '' %>" data-id="<%= m.id %>">
+        <% if (m.replyTo) { %><div class="rmsg-quote">↩ <%= m.replyName %>: <%= m.replySnippet %></div><% } %>
         <div class="rmsg-head">
           <% if (m.avatar) { %>
             <% if (m.handle && !m.mine) { %><a class="rmsg-avatar" href="/u/<%= m.handle %>" style="background-image:url('<%= m.avatar %>')" title="<%= m.name %>"></a><% } else { %><span class="rmsg-avatar" style="background-image:url('<%= m.avatar %>')"></span><% } %>
@@ -45,7 +46,7 @@
           <span class="rmsg-time"><%= (m.created_at || '').slice(11, 16) %></span>
         </div>
         <% if (m.image) { %><a class="chat-img-link" href="<%= m.image %>" target="_blank" rel="noopener"><img class="chat-img" src="<%= m.image %>" alt="shared picture" loading="lazy"></a><% } %>
-        <% if (m.body) { %><div class="rmsg-body"><%= m.body %></div><% } %>
+        <% if (m.body) { %><div class="rmsg-body"><%= m.body %><button type="button" class="rmsg-reply" data-id="<%= m.id %>" data-name="<%= m.name %>">↩ Reply</button></div><% } else { %><button type="button" class="rmsg-reply solo" data-id="<%= m.id %>" data-name="<%= m.name %>">↩ Reply</button><% } %>
       </div>
     <% }); %>
   </div>
@@ -83,6 +84,11 @@
   <% } %>
 
   <div id="typing-ind" class="typing-ind" hidden><%= otherName %> is typing<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span></div>
+
+  <div id="dm-reply-ctx" class="reply-ctx" hidden>
+    ↩ Replying to <strong id="dm-reply-ctx-name"></strong>
+    <button type="button" id="dm-reply-cancel" title="Cancel reply">✕</button>
+  </div>
 
   <div id="dm-mention-list" class="mention-list" hidden></div>
 
@@ -342,11 +348,42 @@
   });
   input.addEventListener('blur', function () { setTimeout(dmHideMentions, 150); });
 
+  // --- Reply to a specific message -------------------------------------------
+  var dmReplyTo = null;
+  var dmReplyCtx = document.getElementById('dm-reply-ctx');
+  var dmReplyCtxName = document.getElementById('dm-reply-ctx-name');
+  function dmSetReply(id, name) {
+    dmReplyTo = id;
+    if (dmReplyCtxName) dmReplyCtxName.textContent = name || 'them';
+    if (dmReplyCtx) dmReplyCtx.hidden = false;
+    input.focus();
+  }
+  function dmClearReply() { dmReplyTo = null; if (dmReplyCtx) dmReplyCtx.hidden = true; }
+  var dmReplyCancel = document.getElementById('dm-reply-cancel');
+  if (dmReplyCancel) dmReplyCancel.addEventListener('click', dmClearReply);
+  box.addEventListener('click', function (e) {
+    var b = e.target.closest('.rmsg-reply');
+    if (!b) return;
+    dmSetReply(b.getAttribute('data-id'), b.getAttribute('data-name'));
+  });
+  function notifyReply(m) {
+    var t = el('div', 'reply-toast', '↩ ' + (m.name === 'You' ? otherName : m.name) + ' replied to you');
+    t.addEventListener('click', function () {
+      var tg = box.querySelector('.rmsg[data-id="' + m.id + '"]');
+      if (tg) tg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      t.remove();
+    });
+    document.body.appendChild(t);
+    setTimeout(function () { t.classList.add('show'); }, 20);
+    setTimeout(function () { t.classList.remove('show'); setTimeout(function () { t.remove(); }, 300); }, 5000);
+  }
+
   function addMessage(m) {
     if (empty) { empty.remove(); empty = null; }
     if (box.querySelector('.rmsg[data-id="' + m.id + '"]')) return;
     var wrap = el('div', 'rmsg' + (m.mine ? ' mine' : ''));
     wrap.setAttribute('data-id', m.id);
+    if (m.replyTo) wrap.appendChild(el('div', 'rmsg-quote', '↩ ' + (m.replyName || '') + ': ' + (m.replySnippet || '')));
     var head = el('div', 'rmsg-head');
     if (m.avatar) {
       var av;
@@ -373,7 +410,16 @@
       link.appendChild(img);
       wrap.appendChild(link);
     }
-    if (m.body) { var bodyEl = el('div', 'rmsg-body'); appendRich(bodyEl, m.body); wrap.appendChild(bodyEl); }
+    var rbtn = el('button', 'rmsg-reply', '↩ Reply');
+    rbtn.type = 'button'; rbtn.setAttribute('data-id', m.id); rbtn.setAttribute('data-name', m.name);
+    if (m.body) {
+      var bodyEl = el('div', 'rmsg-body'); appendRich(bodyEl, m.body);
+      bodyEl.appendChild(rbtn); // reply lives inside the bubble
+      wrap.appendChild(bodyEl);
+    } else {
+      rbtn.className = 'rmsg-reply solo';
+      wrap.appendChild(rbtn);
+    }
     box.appendChild(wrap);
     if (m.id > lastId) lastId = m.id;
   }
@@ -388,7 +434,8 @@
       if (data.messages && data.messages.length) {
         data.messages.forEach(function (m) {
           addMessage(m);
-          if (!m.mine && mentionsMe(m.body)) notifyMention(); // the other person @mentioned you
+          if (m.replyToMe && !m.mine) notifyReply(m); // the other person replied to your message
+          else if (!m.mine && mentionsMe(m.body)) notifyMention(); // or @mentioned you
         });
         scrollIfNeeded(); markSeen();
       }
@@ -417,13 +464,15 @@
     e.preventDefault();
     var body = input.value.trim();
     if (!body) return;
+    var params = { body: body };
+    if (dmReplyTo) params.reply_to = dmReplyTo;
     try {
       var r = await fetch(replyUrl, {
         method: 'POST',
         headers: { accept: 'application/json', 'content-type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ body: body }),
+        body: new URLSearchParams(params),
       });
-      if (r.ok) { input.value = ''; atBottom = true; await poll(); } // poll pulls in our message (and any we missed)
+      if (r.ok) { input.value = ''; dmClearReply(); atBottom = true; await poll(); } // poll pulls in our message (and any we missed)
       else if (r.status === 402) { await poll(); } // free time's up — show the paywall
     } catch (e) {}
   });
@@ -438,6 +487,8 @@
     if (file.size > 10 * 1024 * 1024) { alert('That image is too large (max 10 MB). Please pick a smaller one.'); fileInput.value = ''; return; }
     var fd = new FormData();
     fd.append('image', file);
+    if (dmReplyTo) fd.append('reply_to', dmReplyTo);
+    dmClearReply();
     photoBtn.disabled = true;
     var orig = photoBtn.textContent; photoBtn.textContent = '⏳';
     try {

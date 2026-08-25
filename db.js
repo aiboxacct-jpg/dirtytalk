@@ -147,6 +147,8 @@ async function migrate() {
     'ALTER TABLE users ADD COLUMN offer_minutes INTEGER NOT NULL DEFAULT 0',
     // A room message can be a reply to an earlier one (quotes it + notifies).
     'ALTER TABLE room_messages ADD COLUMN reply_to INTEGER',
+    // Same for private-chat messages.
+    'ALTER TABLE dm_messages ADD COLUMN reply_to INTEGER',
   ];
   for (const sql of stmts) {
     try {

@@ -53,12 +53,25 @@ async function findOrCreateThread(creatorId, req, guestName) {
   return db.get('SELECT * FROM threads WHERE id = ?', Number(info.lastInsertRowid));
 }
 
+// Messages joined with the one each replies to (p.*), for the quote snippet.
+const DM_MSG_SQL = `SELECT m.*, p.sender AS reply_sender, p.body AS reply_body, p.image_url AS reply_image
+  FROM dm_messages m LEFT JOIN dm_messages p ON p.id = m.reply_to`;
 function threadMessages(threadId) {
-  return db.all('SELECT * FROM dm_messages WHERE thread_id = ? ORDER BY id', threadId);
+  return db.all(`${DM_MSG_SQL} WHERE m.thread_id = ? ORDER BY m.id`, threadId);
+}
+function replyToOf(req) {
+  const n = parseInt(req.body.reply_to, 10);
+  return Number.isFinite(n) && n > 0 ? n : null;
 }
 
-async function addMessage(threadId, sender, body) {
-  await db.run('INSERT INTO dm_messages (thread_id, sender, body) VALUES (?, ?, ?)', threadId, sender, body);
+async function addMessage(threadId, sender, body, replyTo) {
+  await db.run(
+    'INSERT INTO dm_messages (thread_id, sender, body, reply_to) VALUES (?, ?, ?, ?)',
+    threadId,
+    sender,
+    body,
+    replyTo || null
+  );
   await db.run("UPDATE threads SET last_at = datetime('now') WHERE id = ?", threadId);
 }
 
@@ -92,6 +105,7 @@ function serializeDm(rows, ctx) {
   return rows.map((m) => {
     const fromCreator = m.sender === 'creator';
     const mine = m.sender === (ctx.isCreator ? 'creator' : 'guest');
+    const replyFromCreator = m.reply_sender === 'creator';
     return {
       id: m.id,
       body: m.body,
@@ -104,6 +118,11 @@ function serializeDm(rows, ctx) {
       gender: fromCreator ? ctx.creatorGender : null,
       verified: fromCreator ? ctx.creatorVerified : false,
       handle: fromCreator ? ctx.creatorHandle : null,
+      // Reply context: the message this one replies to.
+      replyTo: m.reply_to || null,
+      replyName: m.reply_to ? (replyFromCreator ? ctx.creatorName : ctx.guestName) : null,
+      replySnippet: m.reply_to ? String(m.reply_body || (m.reply_image ? '📷 Photo' : '')).slice(0, 60) : null,
+      replyToMe: !!(m.reply_to && m.reply_sender === (ctx.isCreator ? 'creator' : 'guest')),
     };
   });
 }
@@ -277,7 +296,7 @@ router.get('/:id/feed', async (req, res) => {
   if (!acc.ok) return res.status(403).json({ ok: false });
   const after = Number(req.query.after) || 0;
   const rows = await db.all(
-    'SELECT * FROM dm_messages WHERE thread_id = ? AND id > ? ORDER BY id LIMIT 200',
+    `${DM_MSG_SQL} WHERE m.thread_id = ? AND m.id > ? ORDER BY m.id LIMIT 200`,
     thread.id,
     after
   );
@@ -335,7 +354,7 @@ router.post('/:id/reply', async (req, res) => {
   }
   const body = String(req.body.body || '').trim();
   if (body) {
-    await addMessage(thread.id, acc.isCreator ? 'creator' : 'guest', body.slice(0, MAX));
+    await addMessage(thread.id, acc.isCreator ? 'creator' : 'guest', body.slice(0, MAX), replyToOf(req));
     clearTyping(thread.id, acc.isCreator ? 'creator' : 'guest');
   }
   // Ajax callers just get an OK and then poll /feed for the new message(s);
@@ -360,11 +379,12 @@ router.post('/:id/upload', uploadSingle('image'), async (req, res) => {
     return res.status(500).json({ ok: false, error: 'Upload failed. Try again.' });
   }
   await db.run(
-    'INSERT INTO dm_messages (thread_id, sender, body, image_url) VALUES (?, ?, ?, ?)',
+    'INSERT INTO dm_messages (thread_id, sender, body, image_url, reply_to) VALUES (?, ?, ?, ?, ?)',
     thread.id,
     acc.isCreator ? 'creator' : 'guest',
     '',
-    url
+    url,
+    replyToOf(req)
   );
   await db.run("UPDATE threads SET last_at = datetime('now') WHERE id = ?", thread.id);
   clearTyping(thread.id, acc.isCreator ? 'creator' : 'guest');
