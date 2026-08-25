@@ -81,6 +81,13 @@
       <button type="button" id="paid-notify" class="btn small paid-notify-btn">✅ I sent the payment</button>
       <span id="paid-notify-note" class="pay-note" hidden></span>
     </div>
+    <% if (tips && tips.length) { %>
+      <div id="paid-methods" class="paid-methods" hidden>
+        <span class="paid-methods-label">Which one did you send it through?</span>
+        <% tips.forEach(function(t){ %><button type="button" class="btn small paid-method" data-method="<%= t.label %>"><%= t.label %></button><% }); %>
+        <button type="button" class="btn small muted paid-method" data-method="">Other / not sure</button>
+      </div>
+    <% } %>
   <% } %>
 
   <div id="typing-ind" class="typing-ind" hidden><%= otherName %> is typing<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span></div>
@@ -446,14 +453,25 @@
   }
   setInterval(poll, 4000);
 
-  // Buyer tells the host they've sent payment (works even while paused).
+  // Buyer tells the host they've sent payment (works even while paused). If the
+  // host has 2+ payment links, the buyer first picks which one they used.
   var paidBtn = document.getElementById('paid-notify');
   var paidNote = document.getElementById('paid-notify-note');
-  if (paidBtn) paidBtn.addEventListener('click', async function () {
-    if (!confirm('Let the host know you sent your payment?')) return;
+  var paidMethods = document.getElementById('paid-methods');
+  var realMethods = paidMethods
+    ? [].filter.call(paidMethods.querySelectorAll('.paid-method'), function (b) { return b.getAttribute('data-method'); })
+    : [];
+  async function sendPaid(method) {
+    if (paidMethods) paidMethods.hidden = true;
     paidBtn.disabled = true;
     try {
-      var r = await fetch(base + '/paid-notify' + tokenQ, { method: 'POST', headers: { accept: 'application/json' } });
+      var params = new URLSearchParams();
+      if (method) params.set('method', method);
+      var r = await fetch(base + '/paid-notify' + tokenQ, {
+        method: 'POST',
+        headers: { accept: 'application/json', 'content-type': 'application/x-www-form-urlencoded' },
+        body: params,
+      });
       var d = await r.json();
       if (d.ok) {
         if (paidNote) { paidNote.textContent = '✓ Host notified'; paidNote.hidden = false; }
@@ -461,6 +479,18 @@
       }
     } catch (e) {}
     setTimeout(function () { paidBtn.disabled = false; }, 30000);
+  }
+  if (paidBtn) paidBtn.addEventListener('click', function () {
+    if (realMethods.length >= 2) { // let them choose which link they used
+      if (paidMethods) paidMethods.hidden = !paidMethods.hidden;
+      return;
+    }
+    if (!confirm('Let the host know you sent your payment?')) return;
+    sendPaid(realMethods.length === 1 ? realMethods[0].getAttribute('data-method') : '');
+  });
+  if (paidMethods) paidMethods.addEventListener('click', function (e) {
+    var b = e.target.closest('.paid-method');
+    if (b) sendPaid(b.getAttribute('data-method'));
   });
 
   form.addEventListener('submit', async function (e) {

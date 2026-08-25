@@ -329,7 +329,9 @@ router.post('/:id/paid-notify', async (req, res) => {
   if (now - last < 25000) return res.json({ ok: true, throttled: true }); // already sent recently
   paidNotifyAt.set(thread.id, now);
   const sender = acc.isCreator ? 'creator' : 'guest';
-  await addMessage(thread.id, sender, '💸 I sent the payment — please check and unlock me! 🙏');
+  const method = String(req.body.method || '').trim().slice(0, 30);
+  const via = method ? ' via ' + method : '';
+  await addMessage(thread.id, sender, '💸 I sent the payment' + via + ' — please check and unlock me! 🙏');
   clearTyping(thread.id, sender);
   res.json({ ok: true });
 });

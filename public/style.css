@@ -227,6 +227,12 @@ body.dim .dim-toggle { border-color: #4a3f5c; color: #cdc4db; }
 .paid-notify-wrap { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 6px 0; }
 .paid-notify-btn { background: #2f6fdb; }
 .paid-notify-btn:hover { background: #285fbe; }
+.paid-methods { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; padding: 8px 10px; background: #eef3fc; border: 1px solid #cfe0f7; border-radius: 10px; }
+.paid-methods-label { font-size: 0.82rem; font-weight: 600; color: #285fbe; margin-right: 2px; }
+.paid-method { background: #2f6fdb; }
+.paid-method:hover { background: #285fbe; }
+.paid-method.muted { background: #ece6f2; color: var(--ink); }
+.paid-method.muted:hover { background: #e0d8ea; }
 .offer-card { background: linear-gradient(135deg, #fff2f8, #f3ecff); border: 1px solid #f2c9e0; border-radius: 12px; padding: 11px 14px; margin: 12px 0; font-size: 0.92rem; color: var(--ink); }
 .offer-fields { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 4px 0 4px; font-weight: 600; }
 .offer-fields input { width: 90px; }
