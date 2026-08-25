@@ -114,6 +114,19 @@ const MSG_JOINS = `FROM room_messages gm
   LEFT JOIN users u ON u.id = gm.user_id
   LEFT JOIN room_messages p ON p.id = gm.reply_to`;
 
+// "Here now" snapshot: creators (clickable) + buyers (browsing) active in the
+// last 2 minutes, plus the live guest count. online_at refreshes while a user
+// has the site open and stops when they leave, so people drop off on their own.
+async function hereState(req) {
+  const creators = await db.all(
+    "SELECT id, name, handle, verified, avatar_url, gender FROM users WHERE is_buyer = 0 AND online_at >= datetime('now', '-2 minutes') ORDER BY online_at DESC LIMIT 20"
+  );
+  const buyers = await db.all(
+    "SELECT id, name, gender FROM users WHERE is_buyer = 1 AND online_at >= datetime('now', '-2 minutes') ORDER BY online_at DESC LIMIT 20"
+  );
+  return { creators, buyers, guests: guestCount(req.gid) };
+}
+
 // Room page
 router.get('/', async (req, res) => {
   const rows = await db.all(
@@ -121,17 +134,13 @@ router.get('/', async (req, res) => {
   );
   rows.reverse();
   markGuest(req);
-  // "Here now" = creators actually active in the last 5 minutes. Their online_at
-  // refreshes (~every minute) while they have the site open; it stops when they
-  // log out or close the tab, so they drop off the list.
-  const creators = await db.all(
-    "SELECT id, name, handle, verified, avatar_url, gender FROM users WHERE is_buyer = 0 AND online_at >= datetime('now', '-5 minutes') ORDER BY online_at DESC LIMIT 20"
-  );
+  const here = await hereState(req);
   res.render('room', {
     title: 'Room',
     messages: serialize(rows, req),
-    creators,
-    guests: guestCount(req.gid),
+    creators: here.creators,
+    buyers: here.buyers,
+    guests: here.guests,
     suggestedName: req.user ? req.user.name : nickFor(req),
     isGuest: !req.user,
   });
@@ -145,7 +154,7 @@ router.get('/feed', async (req, res) => {
     after
   );
   markGuest(req);
-  res.json({ messages: serialize(rows, req), typing: typingNames(keyFor(req)), guests: guestCount(req.gid) });
+  res.json({ messages: serialize(rows, req), typing: typingNames(keyFor(req)), here: await hereState(req) });
 });
 
 // Lightweight "I'm typing" ping (in memory, no DB write).

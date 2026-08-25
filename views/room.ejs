@@ -10,13 +10,17 @@
   </div>
 <% } %>
 
-<div class="here-now" id="here-now"<% if (!creators.length && !guests) { %> hidden<% } %>>
-  <button type="button" class="strip-label" id="here-toggle" aria-expanded="true">Here now<% if (creators.length) { %> · <span id="here-count"><%= creators.length %></span><% } %> <span class="strip-chev">▾</span></button>
+<% var _total = creators.length + buyers.length + guests; %>
+<div class="here-now" id="here-now"<% if (!_total) { %> hidden<% } %>>
+  <button type="button" class="strip-label" id="here-toggle" aria-expanded="true">Here now · <span id="here-count"><%= _total %></span> <span class="strip-chev">▾</span></button>
   <div class="creators-strip" id="strip-chips">
     <% creators.forEach(function(c){ %>
       <a class="creator-chip" href="/u/<%= c.handle || c.id %>"><% if (c.avatar_url) { %><span class="chip-avatar" style="background-image:url('<%= c.avatar_url %>')"></span><% } %><%= c.name %><% if (c.gender) { %> <span class="gender <%= c.gender %>"><%= c.gender === 'male' ? '♂' : '♀' %></span><% } %><% if (c.verified) { %> <span class="verified" title="Verified">✔</span><% } %></a>
     <% }); %>
-    <span class="guest-chip" id="guest-chip"<% if (!guests) { %> hidden<% } %>>👀 <span id="guest-count"><%= guests %></span> guest<span id="guest-plural"><%= guests === 1 ? '' : 's' %></span></span>
+    <% buyers.forEach(function(b){ %>
+      <span class="buyer-chip">🛍 <%= b.name %><% if (b.gender) { %> <span class="gender <%= b.gender %>"><%= b.gender === 'male' ? '♂' : '♀' %></span><% } %></span>
+    <% }); %>
+    <% if (guests) { %><span class="guest-chip" id="guest-chip">👀 <span id="guest-count"><%= guests %></span> guest<span id="guest-plural"><%= guests === 1 ? '' : 's' %></span></span><% } %>
   </div>
 </div>
 
@@ -244,14 +248,46 @@
     applyHere(hereCollapsed);
   });
 
-  function updateGuests(n) {
-    var chip = document.getElementById('guest-chip');
-    if (!chip) return;
-    document.getElementById('guest-count').textContent = n;
-    document.getElementById('guest-plural').textContent = n === 1 ? '' : 's';
-    chip.hidden = !n;
-    var strip = document.getElementById('here-now');
-    if (strip && n) strip.hidden = false; // guests showed up — reveal the strip
+  // Live "Here now": rebuild creator/buyer chips when the set changes (so people
+  // who went offline drop off), keep the guest count fresh, update the total.
+  var hereSig = '';
+  function chipCreator(c) {
+    var a = el('a', 'creator-chip');
+    a.href = '/u/' + (c.handle || c.id);
+    if (c.avatar_url) { var av = el('span', 'chip-avatar'); av.style.backgroundImage = "url('" + c.avatar_url + "')"; a.appendChild(av); }
+    a.appendChild(document.createTextNode(c.name));
+    if (c.gender) { a.appendChild(document.createTextNode(' ')); a.appendChild(el('span', 'gender ' + c.gender, c.gender === 'male' ? '♂' : '♀')); }
+    if (c.verified) { a.appendChild(document.createTextNode(' ')); a.appendChild(el('span', 'verified', '✔')); }
+    return a;
+  }
+  function chipBuyer(b) {
+    var s = el('span', 'buyer-chip');
+    s.appendChild(document.createTextNode('🛍 ' + b.name));
+    if (b.gender) { s.appendChild(document.createTextNode(' ')); s.appendChild(el('span', 'gender ' + b.gender, b.gender === 'male' ? '♂' : '♀')); }
+    return s;
+  }
+  function renderHere(here) {
+    if (!here) return;
+    var chipsBox = document.getElementById('strip-chips');
+    var wrap = document.getElementById('here-now');
+    var count = document.getElementById('here-count');
+    if (!chipsBox) return;
+    var total = here.creators.length + here.buyers.length + here.guests;
+    if (count) count.textContent = total;
+    if (wrap) wrap.hidden = !total;
+    var sig = JSON.stringify([here.creators.map(function (c) { return c.id; }), here.buyers.map(function (b) { return b.id; })]);
+    if (sig !== hereSig) {
+      hereSig = sig;
+      [].slice.call(chipsBox.querySelectorAll('.creator-chip, .buyer-chip')).forEach(function (n) { n.remove(); });
+      var gRef = document.getElementById('guest-chip');
+      here.creators.forEach(function (c) { chipsBox.insertBefore(chipCreator(c), gRef); });
+      here.buyers.forEach(function (b) { chipsBox.insertBefore(chipBuyer(b), gRef); });
+    }
+    var gc = document.getElementById('guest-chip');
+    if (here.guests > 0) {
+      if (!gc) { gc = el('span', 'guest-chip'); gc.id = 'guest-chip'; chipsBox.appendChild(gc); }
+      gc.textContent = '👀 ' + here.guests + ' guest' + (here.guests === 1 ? '' : 's');
+    } else if (gc) { gc.remove(); }
   }
 
   function renderTyping(names) {
@@ -381,7 +417,7 @@
         scrollIfNeeded();
       }
       renderTyping(data.typing);
-      if (typeof data.guests === 'number') updateGuests(data.guests);
+      renderHere(data.here);
     } catch (e) {}
   }
   setInterval(poll, 4000);
