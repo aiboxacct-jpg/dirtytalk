@@ -4,6 +4,30 @@
 <meta name="robots" content="noindex">
 <title><%= typeof title !== 'undefined' ? title + ' · ' + siteName : siteName %></title>
 <link rel="stylesheet" href="/public/style.css">
+<script>
+// Bell chime for pings / new private messages — synthesized (no asset needed).
+window.playBell = function () {
+  try {
+    var now = Date.now();
+    if (window.__bellLast && now - window.__bellLast < 800) return; // throttle bursts
+    window.__bellLast = now;
+    var Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    var ctx = window.__bellCtx || (window.__bellCtx = new Ctx());
+    if (ctx.state === 'suspended') ctx.resume();
+    var t = ctx.currentTime;
+    [[880, 0.22], [1320, 0.11], [1760, 0.05]].forEach(function (p) { // fundamental + overtones
+      var osc = ctx.createOscillator(), g = ctx.createGain();
+      osc.type = 'sine'; osc.frequency.value = p[0];
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(p[1], t + 0.005);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 1.1);
+      osc.connect(g); g.connect(ctx.destination);
+      osc.start(t); osc.stop(t + 1.2);
+    });
+  } catch (e) {}
+};
+</script>
 
 <header class="topbar">
   <a class="brand" href="/"><%= siteName %></a>

@@ -305,6 +305,7 @@
     return new RegExp('@' + myName.replace(/[.*+?^${}()|[\]\\\-]/g, '\\$&') + '\\b', 'i').test(body);
   }
   function notifyMention() {
+    if (window.playBell) window.playBell();
     var t = el('div', 'reply-toast', '💬 ' + otherName + ' mentioned you');
     t.addEventListener('click', function () { t.remove(); });
     document.body.appendChild(t);
@@ -367,6 +368,7 @@
     dmSetReply(b.getAttribute('data-id'), b.getAttribute('data-name'));
   });
   function notifyReply(m) {
+    if (window.playBell) window.playBell();
     var t = el('div', 'reply-toast', '↩ ' + (m.name === 'You' ? otherName : m.name) + ' replied to you');
     t.addEventListener('click', function () {
       var tg = box.querySelector('.rmsg[data-id="' + m.id + '"]');
@@ -434,6 +436,7 @@
       if (data.messages && data.messages.length) {
         data.messages.forEach(function (m) {
           addMessage(m);
+          if (!m.mine && window.playBell) window.playBell(); // bell on a new private message
           if (m.replyToMe && !m.mine) notifyReply(m); // the other person replied to your message
           else if (!m.mine && mentionsMe(m.body)) notifyMention(); // or @mentioned you
         });

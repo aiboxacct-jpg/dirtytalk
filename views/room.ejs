@@ -139,6 +139,7 @@
     return new RegExp('@' + name.replace(/[.*+?^${}()|[\]\\\-]/g, '\\$&') + '\\b', 'i').test(body);
   }
   function notifyMention(m) {
+    if (window.playBell) window.playBell();
     var t = el('div', 'reply-toast', '💬 ' + (m.name || 'Someone') + ' mentioned you');
     t.addEventListener('click', function () {
       var tg = box.querySelector('.rmsg[data-id="' + m.id + '"]');
@@ -355,6 +356,7 @@
   }
 
   function notifyReply(m) {
+    if (window.playBell) window.playBell();
     var t = el('div', 'reply-toast', '↩ ' + (m.name || 'Someone') + ' replied to you');
     t.addEventListener('click', function () {
       var target = box.querySelector('.rmsg[data-id="' + m.id + '"]');
