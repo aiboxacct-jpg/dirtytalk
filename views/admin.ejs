@@ -54,8 +54,9 @@
       <% users.forEach(function(u){ %>
         <tr>
           <td>
-            <a href="/u/<%= u.id %>"><%= u.name %></a>
+            <% if (u.is_buyer) { %><span><%= u.name %></span><% } else { %><a href="/u/<%= u.id %>"><%= u.name %></a><% } %>
             <% if (u.verified) { %><span class="verified" title="Verified">✔</span><% } %>
+            <% if (u.is_buyer) { %><span class="tag buyer-tag">🛍 buyer</span><% } %>
             <% if (u.id === adminId) { %><span class="tag">you</span><% } %>
           </td>
           <td class="mono"><%= u.email %></td>
