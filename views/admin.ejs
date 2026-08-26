@@ -2,6 +2,19 @@
 <p class="page-sub">Manage users, verification, and accounts.</p>
 <% if (error) { %><div class="form-error"><%= error %></div><% } %>
 <% var today = new Date().toISOString().slice(0, 10); %>
+<%
+  function lastSeen(ts) {
+    if (!ts) return { text: 'never', online: false, title: '' };
+    var t = Date.parse(String(ts).replace(' ', 'T') + 'Z');
+    if (isNaN(t)) return { text: String(ts), online: false, title: '' };
+    var s = Math.floor((Date.now() - t) / 1000);
+    var text = s < 120 ? 'online now'
+      : s < 3600 ? Math.floor(s / 60) + 'm ago'
+      : s < 86400 ? Math.floor(s / 3600) + 'h ago'
+      : Math.floor(s / 86400) + 'd ago';
+    return { text: text, online: s < 120, title: new Date(t).toLocaleString() };
+  }
+%>
 
 <div class="dash-grid">
   <div class="dash-card accent">
@@ -48,7 +61,7 @@
 <div class="card table-wrap">
   <table class="admin-table">
     <thead>
-      <tr><th>Name</th><th>Email</th><th>Verified</th><th>Bill</th><th>Due / lock</th><th>Joined</th><th></th></tr>
+      <tr><th>Name</th><th>Email</th><th>Verified</th><th>Bill</th><th>Due / lock</th><th>Last seen</th><th>Joined</th><th></th></tr>
     </thead>
     <tbody>
       <% users.forEach(function(u){ %>
@@ -89,6 +102,8 @@
               </form>
             <% } %>
           </td>
+          <% var _seen = lastSeen(u.online_at); %>
+          <td<% if (_seen.online) { %> class="seen-online"<% } else { %> class="muted"<% } %> title="<%= _seen.title %>"><% if (_seen.online) { %>🟢 <% } %><%= _seen.text %></td>
           <td class="muted"><%= (u.created_at || '').slice(0, 10) %></td>
           <td class="row-actions">
             <% if (u.id !== adminId) { %>

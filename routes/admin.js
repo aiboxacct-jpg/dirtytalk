@@ -22,7 +22,7 @@ function flash(req, type, msg) {
 }
 
 function listUsers() {
-  return db.all('SELECT id, email, name, verified, is_buyer, bill_cents, sales_count, due_date, created_at FROM users ORDER BY created_at DESC');
+  return db.all('SELECT id, email, name, verified, is_buyer, bill_cents, sales_count, due_date, online_at, created_at FROM users ORDER BY created_at DESC');
 }
 
 // Aggregate the whole site's billing picture for the dashboard cards.

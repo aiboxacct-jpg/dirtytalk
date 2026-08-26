@@ -240,6 +240,7 @@ body.dim .dim-toggle { border-color: #4a3f5c; color: #cdc4db; }
 .offer-btn { background: #b23fb0; }
 .offer-btn:hover { background: #9a2f98; }
 .bill-owed { font-weight: 800; color: var(--brand); }
+.seen-online { color: #2f7d4a; font-weight: 700; white-space: nowrap; }
 .fee-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin: -8px 0 20px; }
 .fee-form { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; }
 /* Compact account tabs (Dashboard / Pay your bill) — deliberately low-key */
