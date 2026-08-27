@@ -8,6 +8,7 @@ const expressLayouts = require('express-ejs-layouts');
 
 const db = require('./db');
 const { loadUser, isLocked } = require('./middleware');
+const guestblock = require('./guestblock');
 
 // Platform Cash App handle creators send their site-fee bill to.
 const SITE_CASHAPP = process.env.SITE_CASHAPP || 'karmaupvotes';
@@ -69,6 +70,20 @@ app.use((req, res, next) => {
   next();
 });
 
+// --- Blocked guests: barred from posting anything (room + private chats) -----
+app.use((req, res, next) => {
+  if (req.method !== 'POST' || req.user || !guestblock.isBlocked(req.gid)) return next();
+  const p = req.path;
+  const isContentPost =
+    p === '/room' || p === '/room/upload' ||
+    (/^\/dm\//.test(p) && /\/(reply|upload|typing|paid-notify)$/.test(p));
+  if (!isContentPost) return next();
+  if ((req.get('accept') || '').includes('application/json')) {
+    return res.status(403).json({ ok: false, error: 'You have been blocked.' });
+  }
+  return res.status(403).render('error', { title: 'Blocked', message: 'You have been blocked from posting.' });
+});
+
 // --- Account lock (site-fee bill past its admin-set due date) ---------------
 // Guests and admins are never locked. A locked creator is walled off to the
 // pay-to-reactivate page until an admin clears/moves their due date.
@@ -120,6 +135,7 @@ app.use((err, req, res, next) => {
 });
 
 db.init()
+  .then(() => guestblock.load())
   .then(() => app.listen(PORT, () => console.log(`\nChat running at  http://localhost:${PORT}\n`)))
   .catch((err) => {
     console.error('Failed to start:', err);

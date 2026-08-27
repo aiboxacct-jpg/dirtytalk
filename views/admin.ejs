@@ -122,3 +122,26 @@
     </tbody>
   </table>
 </div>
+
+<div class="card">
+  <h2 style="margin-top:0;">Block a guest</h2>
+  <p class="hint">Bar an anonymous visitor from posting by their guest ID (the name on their messages, e.g. <strong>guest-ad88</strong>). They can still read, but can't post in the room or private chats.</p>
+  <form action="/admin/block-guest" method="post" class="add-user">
+    <input type="text" name="guest" placeholder="guest-ad88" maxlength="40" required>
+    <button class="btn danger" type="submit">Block</button>
+  </form>
+  <% if (blockedGuests && blockedGuests.length) { %>
+    <div class="blocked-list">
+      <% blockedGuests.forEach(function(g){ %>
+        <span class="blocked-chip">🚫 guest-<%= String(g).slice(0, 4) %>
+          <form action="/admin/unblock-guest" method="post" class="inline">
+            <input type="hidden" name="gid" value="<%= g %>">
+            <button type="submit" class="unblock-btn" title="Unblock">✕</button>
+          </form>
+        </span>
+      <% }); %>
+    </div>
+  <% } else { %>
+    <p class="hint" style="margin-bottom:0;">No guests blocked.</p>
+  <% } %>
+</div>

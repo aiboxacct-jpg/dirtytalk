@@ -67,6 +67,11 @@ CREATE TABLE IF NOT EXISTS settings (
   value TEXT
 );
 
+CREATE TABLE IF NOT EXISTS blocked_guests (
+  gid        TEXT PRIMARY KEY,        -- the guest's device id
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE INDEX IF NOT EXISTS idx_room_id       ON room_messages(id);
 CREATE INDEX IF NOT EXISTS idx_threads_creator ON threads(creator_id);
 CREATE INDEX IF NOT EXISTS idx_threads_guest   ON threads(guest_id);

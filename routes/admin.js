@@ -5,6 +5,7 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const db = require('../db');
 const { getFeeCents, setFeeCents } = require('../siteconfig');
+const guestblock = require('../guestblock');
 
 const router = express.Router();
 
@@ -46,11 +47,44 @@ async function renderDashboard(req, res, error) {
     users,
     stats: summarize(users),
     feeCents: await getFeeCents(),
+    blockedGuests: guestblock.list(),
     adminId: req.user.id,
     error: error || null,
     wide: true,
   });
 }
+
+// Block a guest by their guest ID ("guest-ad88" or a full gid). Resolves the
+// short "guest-XXXX" nick to matching gids from their room messages.
+router.post('/block-guest', async (req, res) => {
+  let input = String(req.body.guest || '').trim().toLowerCase().replace(/^guest-/, '');
+  if (!/^[0-9a-f]{1,32}$/.test(input)) {
+    flash(req, 'error', 'Enter a guest ID like "guest-ad88".');
+    return res.redirect('/admin');
+  }
+  let gids = [];
+  if (input.length === 32) {
+    gids = [input];
+  } else {
+    const rows = await db.all("SELECT DISTINCT gid FROM room_messages WHERE gid LIKE ? AND gid IS NOT NULL", input + '%');
+    gids = rows.map((r) => r.gid);
+  }
+  if (!gids.length) {
+    flash(req, 'error', 'No guest found for that ID (they may not have posted).');
+    return res.redirect('/admin');
+  }
+  for (const g of gids) await guestblock.block(g);
+  flash(req, 'success', 'Blocked ' + gids.length + ' guest' + (gids.length === 1 ? '' : 's') + '.');
+  res.redirect('/admin');
+});
+
+// Unblock a guest.
+router.post('/unblock-guest', async (req, res) => {
+  const gid = String(req.body.gid || '').trim();
+  await guestblock.unblock(gid);
+  flash(req, 'success', 'Guest unblocked.');
+  res.redirect('/admin');
+});
 
 // Change the site-wide per-sale fee (entered in dollars).
 router.post('/fee', async (req, res) => {

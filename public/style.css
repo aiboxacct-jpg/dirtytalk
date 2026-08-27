@@ -241,6 +241,10 @@ body.dim .dim-toggle { border-color: #4a3f5c; color: #cdc4db; }
 .offer-btn:hover { background: #9a2f98; }
 .bill-owed { font-weight: 800; color: var(--brand); }
 .seen-online { color: #2f7d4a; font-weight: 700; white-space: nowrap; }
+.blocked-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.blocked-chip { display: inline-flex; align-items: center; gap: 6px; background: #fdeaea; color: #b23a3a; border: 1px solid #f2c2c2; border-radius: 999px; padding: 3px 6px 3px 11px; font-size: 0.82rem; font-weight: 600; }
+.unblock-btn { border: none; background: none; color: #b23a3a; cursor: pointer; font-size: 0.9rem; line-height: 1; padding: 0 2px; }
+.unblock-btn:hover { color: #8a2020; }
 .fee-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin: -8px 0 20px; }
 .fee-form { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; }
 /* Compact account tabs (Dashboard / Pay your bill) — deliberately low-key */
