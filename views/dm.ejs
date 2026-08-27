@@ -69,7 +69,7 @@
         <input type="number" id="pw-add-min" class="add-min" min="1" max="240" step="1" value="<%= Math.round(paywall.freeSeconds / 60) %>" aria-label="Minutes to add">
         <button type="button" id="pw-add" class="btn small">➕ Add min</button>
       </span>
-      <% if (offer) { %><button type="button" id="offer-grant" class="btn small offer-btn" data-min="<%= offer.minutes %>" title="Guest paid your <%= offer.price %> offer — give them <%= offer.minutes %> minutes">🎁 Grant <%= offer.minutes %>m</button><% } %>
+      <% if (offer) { %><button type="button" id="offer-grant" class="btn small offer-btn" data-min="<%= offer.minutes %>" data-price="<%= (offer.cents / 100).toFixed(2) %>" title="Guest paid your <%= offer.price %> offer — give them <%= offer.minutes %> minutes">🎁 Grant <%= offer.minutes %>m</button><% } %>
       <span id="hoststatus" class="host-status"></span>
       <button type="button" id="pay-received" class="btn small pay-btn" title="Tap when a tip lands — adds the site fee to your bill">💵 Payment received</button>
       <span id="pay-note" class="pay-note" hidden></span>
@@ -223,33 +223,50 @@
     hostAction('add', m);
   });
   var payNote = document.getElementById('pay-note');
-  // Record a received payment (bills the site fee). Shared by the "Payment
-  // received" button and the offer grant.
-  async function logPayment() {
+  var FEE_PCT = <%- JSON.stringify(feePct || 0) %>;
+  // Record a received payment: bill = feePct% of the amount received. Shared by
+  // the "Payment received" button and the offer grant.
+  async function logPayment(amount) {
     try {
-      var r = await fetch(base + '/payment' + tokenQ, { method: 'POST', headers: { accept: 'application/json' } });
+      var params = new URLSearchParams();
+      if (amount != null) params.set('amount', String(amount));
+      var r = await fetch(base + '/payment' + tokenQ, {
+        method: 'POST',
+        headers: { accept: 'application/json', 'content-type': 'application/x-www-form-urlencoded' },
+        body: params,
+      });
       var d = await r.json();
       if (d.ok && payNote) { payNote.textContent = '✓ Payment logged'; payNote.hidden = false; }
     } catch (e) {}
   }
+  function askAmount(preset) {
+    var raw = prompt('How much did you receive? (in $)\nThe ' + FEE_PCT + '% site fee is added to your bill.', preset || '');
+    if (raw === null) return null; // cancelled
+    var amt = parseFloat(String(raw).replace(/[^0-9.]/g, ''));
+    if (!(amt > 0)) { alert('Please enter an amount greater than 0.'); return null; }
+    return amt;
+  }
 
-  // One-time offer: grant the preset minutes once the guest has paid (counts
-  // as a received payment too).
+  // One-time offer: grant the preset minutes once the guest has paid (counts as
+  // a received payment — bills the fee on the offer price).
   var offerGrant = document.getElementById('offer-grant');
   if (offerGrant) offerGrant.addEventListener('click', function () {
     var m = parseInt(offerGrant.getAttribute('data-min'), 10);
     if (!(m > 0)) return;
-    if (!confirm('Did you receive the payment for this offer?\n\nGrant ' + m + ' minutes now — click Cancel if this is NOT a real payment.')) return;
+    var price = parseFloat(offerGrant.getAttribute('data-price')) || 0;
+    var amt = askAmount(price ? price.toFixed(2) : '');
+    if (amt == null) return;
     hostAction('add', m);
-    logPayment();
+    logPayment(amt);
   });
 
   // Creator confirms a received tip → adds the site fee to their bill.
   var payBtn = document.getElementById('pay-received');
   if (payBtn) payBtn.addEventListener('click', async function () {
-    if (!confirm('Did you receive this payment?\n\nClick OK to confirm — click Cancel if this is NOT a real payment.')) return;
+    var amt = askAmount();
+    if (amt == null) return;
     payBtn.disabled = true;
-    await logPayment();
+    await logPayment(amt);
     payBtn.disabled = false;
   });
 

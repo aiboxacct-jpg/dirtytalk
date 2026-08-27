@@ -5,7 +5,7 @@ const db = require('../db');
 const { requireLogin } = require('../middleware');
 const { uploadSingle, uploadImage, deleteImage } = require('../storage');
 const { uniqueHandle } = require('../slug');
-const { getFeeCents } = require('../siteconfig');
+const { getFeePct } = require('../siteconfig');
 
 const getFn = (sql, ...a) => db.get(sql, ...a);
 
@@ -80,7 +80,7 @@ router.post('/logout', (req, res) => {
 
 // --- Account (name, bio, tip handles) --------------------------------------
 router.get('/account', requireLogin, async (req, res) => {
-  res.render('account', { title: 'My account', error: null, feeCents: await getFeeCents() });
+  res.render('account', { title: 'My account', error: null, feePct: await getFeePct() });
 });
 
 router.post('/account', requireLogin, async (req, res) => {
@@ -93,7 +93,7 @@ router.post('/account', requireLogin, async (req, res) => {
   const crypto = String(req.body.crypto || '').trim().slice(0, 120);
   const gender = ['male', 'female'].includes(req.body.gender) ? req.body.gender : '';
   if (!name) {
-    return res.render('account', { title: 'My account', error: 'Please keep a display name.', feeCents: await getFeeCents() });
+    return res.render('account', { title: 'My account', error: 'Please keep a display name.', feePct: await getFeePct() });
   }
   const paywall = req.body.paywall ? 1 : 0;
   let freeMin = parseInt(req.body.free_minutes, 10);

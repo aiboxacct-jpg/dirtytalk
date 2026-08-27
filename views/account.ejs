@@ -22,8 +22,8 @@
     <div class="tab-panel" data-panel="bill">
       <div class="mini-cards">
         <div class="mini-card">
-          <div class="mini-num"><%= '$' + ((feeCents || 0) / 100).toFixed(2) %></div>
-          <div class="mini-label">Fee per sale</div>
+          <div class="mini-num"><%= feePct %>%</div>
+          <div class="mini-label">Site fee per sale</div>
         </div>
         <div class="mini-card">
           <div class="mini-num"><%= '$' + ((user.bill_cents || 0) / 100).toFixed(2) %></div>
@@ -33,7 +33,7 @@
       <% if (user.due_date) { %>
         <div class="due-warning">⚠ Payment due by <strong><%= user.due_date %></strong> — your account locks that day until it's paid.</div>
       <% } %>
-      <p class="hint" style="margin:8px 0;"><%= '$' + ((feeCents || 0) / 100).toFixed(2) %> per sale — a running tab you owe. Settle up anytime.</p>
+      <p class="hint" style="margin:8px 0;"><%= feePct %>% of each sale — a running tab you owe. Settle up anytime.</p>
       <a class="btn small cashapp-pay" href="https://cash.app/$<%= siteCashapp %>" target="_blank" rel="noopener noreferrer">💵 Pay on Cash App ($<%= siteCashapp %>)</a>
     </div>
   </div>

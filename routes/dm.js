@@ -3,7 +3,7 @@ const express = require('express');
 const crypto = require('crypto');
 const db = require('../db');
 const { tipLinks } = require('../tips');
-const { getFeeCents } = require('../siteconfig');
+const { getFeePct } = require('../siteconfig');
 const { uploadSingle, uploadImage, deleteImage } = require('../storage');
 
 const router = express.Router();
@@ -283,6 +283,7 @@ router.get('/:id', async (req, res) => {
     offer: thread.offer_cents > 0 && thread.offer_minutes > 0
       ? { cents: thread.offer_cents, minutes: thread.offer_minutes, price: '$' + (thread.offer_cents / 100).toFixed(2) }
       : null,
+    feePct: await getFeePct(), // site fee as a % of the amount the host received
     paywall,
     tokenSuffix: req.query.t ? '?t=' + encodeURIComponent(req.query.t) : '',
   });
@@ -425,14 +426,16 @@ router.post('/:id/host', async (req, res) => {
 });
 
 // --- Creator logs a payment they received (adds the site fee to their tab) ----
-// Tips happen off-site, so the creator taps this each time one lands. We can't
-// see the amount, so it's a flat per-sale fee (admin-set), owed to the platform.
+// Tips happen off-site, so the creator enters the amount they got; the site fee
+// is that percentage of it, owed to the platform.
 router.post('/:id/payment', async (req, res) => {
   const thread = await threadWithCreator(req.params.id);
   if (!thread) return res.status(404).json({ ok: false });
   const acc = access(thread, req);
   if (!acc.isCreator) return res.status(403).json({ ok: false, error: 'Only the host can do that.' });
-  const feeCents = await getFeeCents();
+  const pct = await getFeePct();
+  const amountCents = Math.max(0, Math.round(parseFloat(req.body.amount) * 100)) || 0;
+  const feeCents = Math.round((amountCents * pct) / 100);
   await db.run(
     'UPDATE users SET bill_cents = bill_cents + ?, sales_count = sales_count + 1 WHERE id = ?',
     feeCents,
