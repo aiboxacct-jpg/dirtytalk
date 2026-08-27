@@ -72,7 +72,7 @@
             <% if (u.is_buyer) { %><span class="tag buyer-tag">🛍 buyer</span><% } %>
             <% if (u.id === adminId) { %><span class="tag">you</span><% } %>
           </td>
-          <td class="mono"><%= u.email %></td>
+          <td class="mono" title="<%= u.email %>"><%= u.email %></td>
           <td>
             <form action="/admin/verify" method="post" class="inline">
               <input type="hidden" name="user_id" value="<%= u.id %>">

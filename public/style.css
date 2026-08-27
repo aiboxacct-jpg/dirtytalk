@@ -132,7 +132,7 @@ textarea { resize: vertical; }
 .admin-table tr:last-child td { border-bottom: none; }
 .row-actions { display: flex; gap: 6px; align-items: center; }
 .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.82rem; }
-.admin-table .mono { white-space: normal; word-break: break-word; } /* email wraps on narrow widths instead of forcing a scrollbar */
+.admin-table .mono { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 170px; } /* truncate long emails (full on hover); table scrolls if still too wide */
 .inline { display: inline; margin: 0; }
 .btn.danger { background: var(--danger); color: #fff; }
 .danger-zone { border: 1px solid #f2c2c2; margin-top: 16px; }
@@ -263,7 +263,7 @@ body.dim .dim-toggle { border-color: #4a3f5c; color: #cdc4db; }
 .cashapp-pay { display: inline-block; background: #00c244; margin-top: 4px; }
 .cashapp-pay:hover { background: #00a83a; }
 .due-warning { background: #fff4e5; border: 1px solid #ffc98a; color: #8a5300; border-radius: 10px; padding: 10px 12px; font-size: 0.86rem; margin: 4px 0 10px; }
-.due-form { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.due-form { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; }
 .due-input { padding: 5px 7px; border: 1px solid var(--line); border-radius: 8px; font: inherit; }
 .locked-tag { background: var(--danger); color: #fff; }
 /* Admin summary dashboard */
