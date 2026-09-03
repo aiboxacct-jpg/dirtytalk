@@ -13,3 +13,21 @@
     <% }); %>
   </div>
 <% } %>
+
+<script>
+// Visiting the Messages inbox counts as reviewing them — mark every chat read
+// and clear the unread badge (it re-appears when a genuinely new message lands).
+(function () {
+  fetch('/dm/activity', { headers: { accept: 'application/json' } })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      if (!d || !d.threads) return;
+      var s; try { s = JSON.parse(localStorage.getItem('dt_dm_seen') || '{}'); } catch (e) { s = {}; }
+      d.threads.forEach(function (t) { if (t.latestId > (s[t.id] || 0)) s[t.id] = t.latestId; });
+      try { localStorage.setItem('dt_dm_seen', JSON.stringify(s)); } catch (e) {}
+      var b = document.getElementById('dm-badge');
+      if (b) { b.textContent = ''; b.classList.remove('show'); }
+    })
+    .catch(function () {});
+})();
+</script>
